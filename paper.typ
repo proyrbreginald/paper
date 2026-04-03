@@ -118,9 +118,9 @@
  */
 #page(numbering: "i", header: none)[
   #[
-    #show outline.entry: set block(above: 16pt, below: 16pt)
-    #set text(size: 14pt)
-    #outline(depth: 3, indent: 14pt * 2, title: [
+    #show outline.entry: set block(above: 12pt, below: 12pt)
+    #set text(size: 12pt)
+    #outline(depth: 3, indent: 12pt * 2, title: [
       #block(width: 100%)[
         #align(center)[
           #text(font: "Microsoft YaHei", size: 16pt, weight: "bold", tracking: 16pt)[
@@ -164,6 +164,12 @@
   ]
 
   #heading(level: 1, numbering: none)[关键词]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    引导程序；差分升级；固件升级；实时操作系统
+  ]
 
   = 绪论
 
