@@ -727,55 +727,398 @@
   = 核心底层机制与RTOS集成
 
   #par[]
-  - 本章主要对应技术细节2、3、5，重点论述底层启动逻辑和系统资源管理。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    对于一款支持复杂差分算法与高可靠在线升级的 Bootloader 而言，底层的运行机制决定了系统的上限。传统的裸机开发模式高度依赖芯片厂商预编译的汇编启动代码，且在面对大体量固件传输和高耗时解压算法时，容易出现系统阻塞。针对这一痛点，本文在底层机制上进行了深度重构。本章首先详细阐述了基于纯 C 语言重写的 MCU 启动文件与复位流程，随后介绍了轻量级实时操作系统 RT-Thread Nano 的集成过程，最后论述了如何利用内核硬件特性构建精确的 CPU 使用率监控系统，从而为多任务调度与升级算法的稳定运行提供坚实的底层保障。
+  ]
   #par[]
 
   == 基于C语言的启动文件深度重写
 
   #par[]
-  - 复位处理逻辑（Reset_Handler）重构： 摒弃传统的汇编启动代码，将Reset_Handler独立出来用纯C语言实现，提高代码可读性与可移植性。
-  - RAM数据初始化： 在C语言中实现.data段的搬运和.bss段的清零操作。
-  - App与Loader代码复用： 统一的C语言启动框架使得Loader和App可以复用相同的初始化逻辑。
-  - App启动检测机制： 在复位处理函数中加入校验逻辑（校验栈顶指针、复位向量有效性、启动参数区的标志位），以决定是留在Loader层还是跳转进入User App。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在 ARM Cortex-M 架构的传统开发中，启动文件（如 startup_stm32h743xx.s）通常由数百行晦涩的汇编代码构成，负责初始化堆栈、清零 BSS 段、搬运 DATA 段以及调用 SystemInit 和 main 函数。这种高度硬件耦合的做法极大地限制了代码的跨平台可移植性，且导致 Bootloader 与 User App 之间难以共享底层初始化逻辑。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    为此，本文摒弃了常规的纯汇编启动架构，采用“极简汇编向量表 + 纯C语言复位逻辑”的混合架构，对系统的启动（Reset_Handler）与 C 运行环境（C-Runtime）构建进行了彻底的深度重写。
+  ]
+  #par[]
+
+  === 极简中断向量表设计与裸函数接管
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    为了将控制权平滑地移交给 C 语言，系统在 vector.s 中仅保留了最基础的中断向量表（vector_table）结构声明。向量表的首个字定义为初始堆栈指针（#str("_stack_start")），第二个字即指向了复位处理程序（reset_handler）。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在 reset.c 模块中，本文利用 GCC 编译器的 #str("__attribute__((naked))") 属性宏（在系统代码中封装为 NAKED 宏），定义了纯 C 语言的复位处理函数 reset_handler(void)。NAKED 属性能够阻止编译器自动插入函数序言（Prologue）和跋语（Epilogue），确保复位后的第一条指令完全受控。进入该函数后，系统第一时间调用 #str("__set_MSP()") 强行刷新主栈指针，确保后续的 C 语言函数调用拥有安全的压栈空间。
+  ]
+  #par[]
+
+  === 底层时钟树与硬件权限的提前初始化
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在进入 C 语言运行环境之前，必须确保关键硬件域的时钟已经就绪。在重写的 reset_handler 中，系统依次调用了底层硬件初始化接口：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + FPU权限开启（fpu_init）：通过配置系统控制块协处理器访问控制寄存器（SCB->CPACR），提前使能浮点运算单元（FPU），以支持后续差分算法中可能涉及的高效运算。
+    + 时钟树配置（rcc_init）：重新配置 Flash 访问延迟（Latency）并配置系统锁相环（PLL），使得 CPU 尽早进入最高主频运行状态，缩短系统启动耗时。
+    + 高级 RAM 域使能（ram_init）：针对 STM32H7 系列多总线 RAM 的特性，主动开启 D2SRAM1/2/3 等高级内存域的总线时钟（RCC_AHB2ENR），并使能 BKPRAM 的电源后备域访问权限，为后续的数据搬运铺平物理通道。
+  ]
+  #par[]
+
+  === 高效 C-Runtime (CRT) 的手动构建与循环展开优化
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    由于剥离了标准库的启动文件，本文在 C 语言中手动实现了原本由编译器隐式完成的 C-Runtime 环境构建。包括对全局变量初始值的搬运（.data 段处理）和未初始化变量的清零（.bss 段处理）。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    值得注意的是，针对 STM32H7 庞大的内存域划分（ITCM、DTCM、AXIRAM、AHBRAM），为了将数据从相对较慢的 Flash 搬运至不同总线的 RAM 中，本文在 reset.h 中设计了两个极具效率的内联函数：reset_copy_ram_init() 和 reset_clear_ram_uninit()。
+  ]
+  #block()[
+    #set list(
+      indent: 12pt * 2,
+    )
+    - 内存对齐与 32 位宽优化：通过位运算（((uintptr_t)dest & 0x3) != 0）对非对齐地址进行字节级修补，在地址对齐到 4 字节边界后，立刻切换为 32 位（uint32_t）指针进行宽字读写，将总线利用率提升了 4 倍。
+    - 循环展开优化（Loop Unrolling）：在此基础上，运用了激进的“循环展开”算法。在处理大量数据时（while (len >= 16)），一次循环体内部直接连续处理 4 个 32 位字（即 16 字节）。这种写法大幅度降低了 CPU 在大内存块拷贝时由于循环跳转带来的流水线冲刷（Pipeline Flush）和条件分支开销，显著缩短了 detools 差分解压缓冲区庞大内存的初始化时间。
+  ]
+  #par[]
+
+  === App启动检测与多态跳转机制的实现
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在纯 C 环境构建完成后，Bootloader 需要决定自身的运行去向，本文将其设计为“预检测跳转”机制。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在 reset_handler 中，紧随 ITCM 代码搬运之后，系统调用了 load.c 模块中的 load_app() 接口：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 状态机判定：系统读取基于共享 RAM（Shared RAM）的 load_config 结构体，通过比对启动标识（LOAD_APP_USER 或 LOAD_APP_OEM），判断当前是否满足跳转用户程序的条件。
+    + 多态复位向量提取：若满足跳转条件，系统从对应的 Flash 分区（USER_START 或 OEM_START）提取该分区的初始堆栈指针与复位函数向量。
+    + 无缝移交控制权：通过 #str("__disable_irq()") 关闭全局中断，修改系统中断向量表偏移寄存器（SCB->VTOR）重定向中断映射，刷新堆栈指针，最终通过强转的函数指针（new_reset_handler()）跨物理分区唤醒用户程序或厂商固件。
+  ]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    若校验失败或当前存在升级任务，函数直接返回，系统继续执行剩余 RAM 区的数据加载，并最终进入 load_boot()，启动 RT-Thread 操作系统接管控制权。这种 C 语言层面的模块化接管，不仅实现了 Bootloader 对 App 跳转的强控，更由于 C 框架的通用性，使得该工程代码可作为标准模块直接移植到其他 Cortex-M 芯片项目中实现底层复用。
+  ]
   #par[]
 
   == RT-Thread Nano操作系统的移植与应用
 
   #par[]
-  - 移植过程： 适配目标MCU的中断与上下文切换机制，配置系统时钟。
-  - 多任务调度： 将串口接收、差分解压还原、系统监控等功能分离成独立的线程（Task），实现业务逻辑的模块化解耦，解决裸机下阻塞式等待的问题。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在传统的 Bootloader 设计中，通常采用裸机（Bare-metal）前后台轮询的架构。然而，随着差分升级（涉及复杂的 Flash 擦写与解压算法计算）与 Ymodem 通信协议的引入，裸机架构容易导致阻塞，影响系统的实时性与稳定性。为此，本文在 Bootloader 中引入了极其轻量级的实时操作系统 RT-Thread Nano，以实现复杂业务的解耦。
+  ]
+  #par[]
+
+  === 底层架构适配与上下文切换
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    针对本项目所采用的基于 ARM Cortex-M7 内核的单片机（STM32H743），系统的底层移植主要涵盖三个方面：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 系统心跳（Tick）配置：在 board.c 中，将 SysTick 定时器配置为 1000Hz（即每秒触发 1000 次中断），在 SysTick_Handler 中断服务函数中调用 rt_tick_increase()，为操作系统提供精准的时基。
+    + 上下文切换（Context Switch）的汇编实现：重写了 PendSV_Handler 异常处理函数。由于 Cortex-M7 包含硬件浮点运算单元（FPU），在发生任务切换时，除了压栈 R4R11 等通用寄存器外，还加入了对 EXC_RETURN 标志位的判断（TST lr, #0x10）。若判断当前任务使用了 FPU，则利用 VSTMDBEQ 和 VLDMIANE 指令对 S16S31 浮点寄存器进行懒压栈（Lazy Stacking）和出栈，确保了差分解压算法中可能涉及的浮点运算数据的绝对安全。
+    + 中断管理：通过实现 rt_hw_interrupt_disable 与 rt_hw_interrupt_enable 函数，利用 Cortex-M 的 CPSID I 和 CPSIE I 指令控制 PRIMASK 寄存器，提供底层的全局中断开关，用于实现操作系统的临界区（Critical Section）保护。
+  ]
+  #par[]
+
+  === 内存管理与系统裁剪
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    由于 Bootloader 的 RAM 资源受限（需为用户 App 预留大部分空间），必须对 RTOS 进行深度裁剪：
+  ]
+  #block()[
+    #set list(
+      indent: 12pt * 2,
+    )
+    - 配置精简：在 rtconfig.h 中，关闭了设备虚拟文件系统（VFS）、软件定时器（Software Timer）等不必要组件。仅保留了信号量、互斥锁和邮箱（Mailbox）等核心 IPC（进程间通信）机制。
+    - 堆内存接管：开启了小内存管理算法（RT_USING_SMALL_MEM_AS_HEAP）。利用链接脚本（Linker Script）导出的 #str("_heap_start") 与 #str("_heap_end") 符号，在 rt_hw_mcu_init 阶段调用 rt_system_heap_init，将紧跟在数据段之后的常规 RAM 区域交给 RTOS 接管，使得系统能够使用 rt_malloc 和 rt_free 动态分配 Ymodem 接收缓冲区和差分算法的计算内存。
+  ]
+  #par[]
+
+  === 启动流程的重构与组件自动初始化
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    为避免汇编启动文件导致的跨平台兼容性问题，本文采用纯 C 语言设计了启动逻辑，并重构了操作系统的启动入口。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    系统调用 rtthread_launch() 后，不仅完成了 MCU 外设时钟的初始化（rt_hw_mcu_init），还引入了自动初始化机制。通过自定义的段属性宏（如 RT_LAUNCH_RUN_EXPORT），将各个外设模块和系统组件的初始化函数指针集中存放到特定的 Flash 段中。在 rt_hw_board_init 阶段，通过遍历该指针数组依次执行初始化，实现了 Bootloader 业务模块间的彻底解耦。
+  ]
+  #par[]
+
+  === 多任务解耦与业务调度机制
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    依托 RTOS 的调度能力，系统将复杂的 OTA 流程划分为多个独立线程：
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    系统调用 rtthread_launch() 后，不仅完成了 MCU 外设时钟的初始化（rt_hw_mcu_init），还引入了自动初始化机制。通过自定义的段属性宏（如 RT_LAUNCH_RUN_EXPORT），将各个外设模块和系统组件的初始化函数指针集中存放到特定的 Flash 段中。在 rt_hw_board_init 阶段，通过遍历该指针数组依次执行初始化，实现了 Bootloader 业务模块间的彻底解耦。
+  ]
+  #block()[
+    #set list(
+      indent: 12pt * 2,
+    )
+    - Boot 守护线程：作为主控线程（优先级较高），负责轮询检测 load_config 标志位。当接收到差分包后，调用 detools_apply_patch 进行固件还原，并执行软复位（NVIC_SystemReset）。
+    - Ymodem 通信线程：专门负责监听 UART 端口。由于 RTOS 提供了阻塞挂起机制，该线程在没有串口数据时会出让 CPU 权限，不再占用死循环。
+    - 系统监视线程：用于监控系统健康状态和资源占用（详见 3.3 节）。
+  ]
   #par[]
 
   == CPU使用率监视器的设计与实现
 
   #par[]
-  - 内核特性利用： 利用ARM Cortex-M的DWT（Data Watchpoint and Trigger）周期计数器或SysTick，精确记录任务运行时间与空闲任务（Idle Task）时间。
-  - 性能监控： 实现实时统计并输出CPU占用率，为差分算法的资源消耗评估和系统优化提供数据支持。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在差分升级过程中，解压还原算法（detools/crle）属于 CPU 密集型任务，同时 Flash 擦写又属于 I/O 耗时型操作。为了精准评估 Bootloader 运行时的系统负载，为后续算法的内存与速度 trade-off（权衡）优化提供数据支撑，本文基于 RT-Thread Idle Hook（空闲钩子）机制与 MCU 硬件定时器，设计并实现了一套高精度的 CPU 使用率监视器。
+  ]
+  #par[]
+
+  === 测量原理与硬件选型
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    常规的 CPU 使用率统计通常依赖操作系统的 Tick 计数，但由于 Tick 精度仅为毫秒级（1ms），且在系统进入休眠（Sleep）时容易出现统计误差，无法满足微观层面的性能分析需求。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    本文巧妙利用了 STM32H7 内部的 LPTIM（低功耗定时器） 作为统计核心。在 rt_hw_mcu_init 中，将 LPTIM1 配置为连续计数模式，使其在内核时钟下运行（理论 1 兆赫兹频率下，1 个 Count 等于 1 微秒）。相比于 SysTick，LPTIM 即使在内核执行 WFI（Wait For Interrupt）进入低功耗状态时依然能够独立精准计数。
+  ]
+  #par[]
+
+  === 空闲任务钩子与睡眠时间统计
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    RT-Thread 的空闲任务（Idle Task）在系统中没有其他就绪线程时运行。本文通过 rt_thread_idle_sethook 注册了自定义的空闲钩子函数 idle_hook_wfi。其核心处理流程如下：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 记录入睡时间：在执行休眠指令前，读取当前 LPTIM1 的计数寄存器值（start = LPTIM1->CNT）。
+    + 进入休眠：调用 ARM 内核专用的 __WFI() 指令，暂停 CPU 内核时钟，此时系统进入低功耗状态，但外设（如 UART 和 LPTIM）仍在工作。
+    + 唤醒与时间累加：当系统被任何中断（如滴答定时器或串口接收中断）唤醒后，记录唤醒时间（end = LPTIM1->CNT）。
+    + 溢出补偿计算：由于 LPTIM1 计数器为 16 位，算法中特别加入了溢出回环处理逻辑（0xFFFF - start + end + 1），计算出本次休眠的精准微秒数，并累加到一个 64 位全局变量 total_sleep_ticks 中，防止长时间运行导致的数值溢出。为防止计算被中断打断，上述操作均被包裹在临界区（关中断）内执行。
+  ]
+  #par[]
+
+  === 监视器线程与占用率计算
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    为实现数据的周期性输出，系统创建了一个名为 monitor 的独立线程（定义于 monitor.c 中）。该线程采用较低的优先级，主要执行以下逻辑：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 绝对时间延时：利用 rt_thread_delay_until 函数实现严格的 1000 毫秒（1 秒）唤醒周期，消除了由于任务被抢占带来的周期抖动。
+    + 数据安全提取：在唤醒后，使用 rt_enter_critical() 进入临界区，提取 total_sleep_ticks 的值并将其迅速清零，确保数据读取的一致性。
+    + 计算与输出：理想情况下，1 秒钟内 LPTIM 应当走过 1,000,000 个微秒 Tick。CPU 使用率的计算公式定义为：
+      #align(center)[
+        $"CPU_Usage(%)" = "100%" - ("Sleep_Ticks" / "1,000,000") times "100%"$
+      ]
+  ]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    通过串口打印输出，开发者可以直观地观察到：系统在等待 Ymodem 握手阶段，CPU 占用率接近 0%（大部分时间处于 WFI 状态）；而在接收到差分包触发 detools 还原计算时，CPU 占用率会瞬间飙升至峰值。
+  ]
+  #par[]
+
+  === 工程价值分析
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    该 CPU 监视器的实现仅占用了极少量的 RAM 与 ROM 资源，且几乎没有引入额外的系统开销。它不仅验证了 RT-Thread 在本 Bootloader 中的成功移植与高效调度，更为论述“差分算法在 MCU 端的计算资源开销”提供了最直接、最客观的数据佐证，大幅提升了整个系统的可观测性。
+  ]
   #par[]
 
   = 固件传输协议与差分升级核心技术
 
   #par[]
-  - 本章对应技术细节4和6，是本文实现升级功能的业务核心。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    本章重点论述 Bootloader 的两大核心业务逻辑：如何安全、可靠地获取新版本固件，以及如何在存储资源受限的 MCU 上通过差分算法还原出完整的新固件。系统采用 Ymodem 协议结合 UART 接口实现固件的灵活下发，并深度集成了针对嵌入式环境优化的 detools 差分还原引擎，实现了兼顾带宽与 Flash 擦写寿命的在线升级方案。
+  ]
   #par[]
 
   == 基于UART与Ymodem协议的文件传输
 
   #par[]
-  - Ymodem协议移植： 在RT-Thread环境下实现Ymodem协议的接收状态机（支持128字节与1024字节数据包，包含CRC校验）。
-  - 文件分类识别机制： 通过Ymodem协议传输的首包（Header Packet）提取文件名称。设计解析逻辑：若文件后缀或名称匹配全量规则，则直接写入USER区（或暂存并覆盖）；若匹配差分包规则，则写入PATCH区触发差分还原流程。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在嵌入式设备的本地升级与调试场景中，串行通信（UART）因其硬件实现简单、兼容性广而成为首选。然而，裸流传输无法保证数据的完整性与边界。为此，本系统引入了 Ymodem 协议作为文件传输的载体。
+  ]
+  #par[]
+
+  === Ymodem 协议的工作机制与 RTOS 适配
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    Ymodem 是一种基于块（Block）的异步文件传输协议，相比于 Xmodem，它具有支持批处理、携带文件元数据（如文件名与大小）以及传输效率更高的优势。
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 多任务环境下的无阻塞接收：在裸机系统中，串口接收往往采用死循环查询，极大地浪费了 CPU 资源。本系统在 RT-Thread Nano 的调度下，专门创建了独立的 Ymodem 通信线程。依托操作系统的信号量（Semaphore）机制，当串口硬件未收到数据时，通信线程会被挂起（Suspend），交出 CPU 使用权；一旦 UART 触发接收中断，中断服务函数释放信号量，立即唤醒该线程进行数据包解析，既保证了响应的实时性，又降低了系统的基础功耗。
+    + 数据完整性校验：系统调用了独立优化的 CRC16 算法（集成于 algo.c 中，采用查表法 crc16_table 以空间换时间，大幅提升计算速度），对 Ymodem 协议的 128 字节或 1024 字节数据包进行严格校验。一旦发现校验和不匹配，系统会向发送端回复 NAK 字符要求重传，确保写入 Flash 的每一块固件数据都绝对正确。
+  ]
+  #par[]
+
+  === 固件分类识别与智能路由机制
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    传统的 Bootloader 通常只支持单一固件的盲写。为了同时兼容“全量升级”与“差分升级”，本系统设计了一套基于 Ymodem 起始包（Packet 0）的智能分类机制。
+  ]
+  #block()[
+    #set list(
+      indent: 12pt * 2,
+    )
+    - 文件元数据提取：当 Ymodem 建立连接并接收到 Packet 0 时，解析引擎会提取其中的字符串信息（包含文件名和文件字节大小）。
+    - 动态路由策略：系统根据文件名称或后缀执行分支逻辑：
+      - 全量包逻辑：若识别为全量固件（如 app.bin），系统将擦除 USER 区，并在后续的数据包接收中，以流的方式将全量固件直接烧写到 USER 区。
+      - 差分包逻辑：若识别为差分补丁包（如 patch.bin 或以 .patch 结尾），系统不会干扰当前正在运行的应用程序，而是将目标擦写地址指向 PATCH 区。接收完成后，系统调用底层参数配置接口（如 load_set_patch_size）将补丁包的实际大小写入掉电不丢失的共享 RAM/Flash 标志区中，为后续的差分还原做准备。
+  ]
   #par[]
 
   == 基于detools的差分还原算法实现
 
   #par[]
-  - 差分升级原理： 详述PC端使用detools结合crle算法（一种非常适合Flash小资源的游程编码压缩算法）对比新旧固件生成Patch文件的过程。
-  - MCU端还原流程：
-    + Loader从PATCH区读取差分包数据。
-    + 将OEM区（或当前USER区）的旧版本固件作为基准（Base）。
-    + 调用detools的C语言解码库（crle解压），在MCU内部进行流式运算。
-    + 将合成后的全新固件数据流式写入USER区。
-  - 内存优化策略： 针对单片机RAM小的特点，详细论述流式读写（Streaming I/O）在差分还原中的应用，避免将整个固件加载到RAM中。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    传统的全量升级方案中，即使只修改了一行代码，也需要下发数百 KB 的完整固件，这不仅严重浪费通信带宽，也加剧了 Flash 扇区的擦写损耗。差分升级（OTA Delta Update）通过“只传差异”彻底解决了这一痛点。
+  ]
+  #par[]
+
+  === 差分升级原理与 detools 选型优势
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    差分升级的本质是：在 PC 端对比新旧两个版本的固件，提取差异数据生成极小的 Patch（补丁）文件；在设备端，将旧固件（Base）与接收到的 Patch 文件进行数学运算，合成出完整的新固件。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    常见的差分算法如 bsdiff 依赖 bzip2 压缩，在解压时需要消耗数 MB 的 RAM 空间，这对于只有几百 KB RAM 的单片机是不可接受的。本系统选用了专门为深度嵌入式设备设计的开源 detools 框架，其底层采用 crle（游程编码压缩）或类似轻量级算法。该算法的显著优势在于：解压还原时的 RAM 开销极小（通常只需极小的缓冲区），完全契合 Cortex-M 系列 MCU 的资源限制。
+  ]
+  #par[]
+
+  === 差分还原的流式处理（Streaming I/O）设计
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    在单片机环境中，无法将几百 KB 的固件一次性读入 RAM 中进行计算。本系统的 detools_apply_patch 深度结合了第二章规划的 Flash 物理分区，采用了流式处理（Streaming I/O）的架构来完成固件合成：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 输入流（Read Stream）：算法引擎同时开启两个读取通道。通道 A 指向 OEM 区（或当前 USER 区）的旧固件作为基准数据（Base data）；通道 B 指向存放于 PATCH 区的补丁数据。
+    + 内存运算（In-RAM Computing）：detools 引擎在 RAM 中仅开辟几百字节的滑动窗口缓存。它以块为单位读取 Base 数据和 Patch 数据，根据 Patch 中的指令（如：复制某段数据、插入新数据、修改某些字节）进行快速的异或与拼接运算。
+    + 输出流（Write Stream）：一旦缓存区拼装出完整的 Flash 扇区大小（如 1KB 或 4KB），系统立即调用底层 Flash 擦写接口（如 erase_user() ），将其流式写入目标分区（如 USER 区）。
+  ]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    这种“边读、边算、边写”的管线式设计，使得无论目标固件有多大，系统所需的 RAM 峰值开销始终保持在一个极低的常量水平。
+  ]
+  #par[]
+
+  === 安全的状态机与跳转控制
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    差分还原是一个耗时且不可逆的重构过程，系统在 boot.c 中设计了严格的状态机（detect_apply 与 detect_reset）以确保升级闭环的安全：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 校验与擦除准备：在调用差分算法前，系统读取 load_config 中的策略（如 LOAD_APPLY_USER），确定基准地址（Base Address）与新应用地址（New App Address），并调用特定区域的擦除函数（如 erase_user(patch_size)）准备空间。
+    + 执行还原与结果验证：调用 detools_apply_patch 执行流式合成。还原完成后，引擎会根据 Patch 包末尾携带的哈希值对新生成的固件进行完整性校验。
+    + 标志位切换与软复位：若返回结果为 DETOOLS_OK，系统利用掉电保持的标志区接口（load_write_config_which(LOAD_APP_USER)）更新引导指向，随后调用 NVIC_SystemReset() 触发 MCU 软件复位。
+    + Bootloader 二次接管：复位后，系统首先进入 LOADER 区的纯 C 语言启动文件（reset_handler），通过检查启动参数无误后，更新主栈指针（__set_MSP）并修改向量表偏移（SCB->VTOR），最终跳转执行全新的 App 程序，完成整个差分升级的生命周期闭环。
+  ]
   #par[]
 
   = 系统测试与分析
