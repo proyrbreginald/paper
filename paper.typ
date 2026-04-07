@@ -37,6 +37,15 @@
 #set text(font: "Times New Roman", size: 12pt)
 
 /**
+ * 为所有代码块设置背景与字体
+ */
+#show raw: set block(fill: rgb("#f5f5f5"), inset: 8pt, radius: 8pt)
+#show raw: set text(font: (
+  (name: "Consolas"),
+  "STKaiti",
+))
+
+/**
  * 论文封面
  */
 #page(numbering: none, header: none)[
@@ -480,7 +489,7 @@
     )
     - 物理存储分区映射：系统通过 partition.h 实现了 Flash 的四等分布局（LOADER区、USER区、PATCH区、OEM区），严格定义了各区间的地址（如 MCU_FLASH_START 为 0x08000000）与扇区容量，隔离了核心代码与下载数据的存储空间。
     - 共享状态参数区（Shared RAM）：这是架构设计的一大亮点。系统通过自定义的编译器属性宏（SECTION(".share")），将一个名为 load_config 的状态结构体（包含错误码、复位标志、升级策略、差分包大小等信息）显式分配到“启动参数区”。
-    - 状态机校验与跳转控制：load.c 模块实现了基于 CRC16 的强校验机制（algo_crc16）。在软复位时，Loader 通过 load_read_config_which() 读取 load_config。若校验通过且目标明确，系统通过重写栈指针（__set_MSP）、更新中断向量表偏移（SCB->VTOR），执行向 USER 区或 OEM 区的安全跳转；若不满足跳转条件，则留在 Loader 层，并向下调用 load_boot() 准备初始化升级组件。
+    - 状态机校验与跳转控制：load.c 模块实现了基于 CRC16 的强校验机制（algo_crc16）。在软复位时，Loader 通过 load_read_config_which() 读取 load_config。若校验通过且目标明确，系统通过重写栈指针（#str("__set_MSP")）、更新中断向量表偏移（SCB->VTOR），执行向 USER 区或 OEM 区的安全跳转；若不满足跳转条件，则留在 Loader 层，并向下调用 load_boot() 准备初始化升级组件。
   ]
   #par[]
 
@@ -686,7 +695,7 @@
   ]
   #par[]
 
-  === 启动参数区（Shared RAM）与数据共享机制（核心机制）
+  === 启动参数区（Shared RAM）与数据共享机制
 
   #par[]
   #par(
@@ -954,10 +963,51 @@
       indent: 12pt * 2,
     )
     + 记录入睡时间：在执行休眠指令前，读取当前 LPTIM1 的计数寄存器值（start = LPTIM1->CNT）。
-    + 进入休眠：调用 ARM 内核专用的 __WFI() 指令，暂停 CPU 内核时钟，此时系统进入低功耗状态，但外设（如 UART 和 LPTIM）仍在工作。
+    + 进入休眠：调用 ARM 内核专用的 #str("__WFI()") 指令，暂停 CPU 内核时钟，此时系统进入低功耗状态，但外设（如 UART 和 LPTIM）仍在工作。
     + 唤醒与时间累加：当系统被任何中断（如滴答定时器或串口接收中断）唤醒后，记录唤醒时间（end = LPTIM1->CNT）。
     + 溢出补偿计算：由于 LPTIM1 计数器为 16 位，算法中特别加入了溢出回环处理逻辑（0xFFFF - start + end + 1），计算出本次休眠的精准微秒数，并累加到一个 64 位全局变量 total_sleep_ticks 中，防止长时间运行导致的数值溢出。为防止计算被中断打断，上述操作均被包裹在临界区（关中断）内执行。
   ]
+  #figure(
+    caption: [空闲任务钩子函数实现],
+    ```C
+    // 累加睡眠的Tick数(虽然LPTIM是16位，但累加变量我们要用64位防止总数溢出)
+    static volatile uint64_t total_sleep_ticks = 0;
+
+    /**
+     * @brief 空闲任务运行时的钩子函数。
+     */
+    ITCM static void idle_hook_wfi(void)
+    {
+        uint16_t start, end;
+        rt_base_t level;
+
+        // 关中断
+        level = rt_hw_interrupt_disable();
+
+        // 读开始时间
+        start = (uint16_t)LPTIM1->CNT;
+
+        __WFI();
+
+        // 读结束时间
+        end = (uint16_t)LPTIM1->CNT;
+
+        // 开中断
+        rt_hw_interrupt_enable(level);
+
+        /* 计算差值并累加 (处理16位回环，逻辑很简单) */
+        if (end >= start)
+        {
+            total_sleep_ticks += (end - start);
+        }
+        else
+        {
+            // 发生了回环 (例如 65535 -> 1)
+            total_sleep_ticks += (0xFFFF - start + end + 1);
+        }
+    }
+    ```,
+  )
   #par[]
 
   === 监视器线程与占用率计算
@@ -1117,20 +1167,55 @@
     + 校验与擦除准备：在调用差分算法前，系统读取 load_config 中的策略（如 LOAD_APPLY_USER），确定基准地址（Base Address）与新应用地址（New App Address），并调用特定区域的擦除函数（如 erase_user(patch_size)）准备空间。
     + 执行还原与结果验证：调用 detools_apply_patch 执行流式合成。还原完成后，引擎会根据 Patch 包末尾携带的哈希值对新生成的固件进行完整性校验。
     + 标志位切换与软复位：若返回结果为 DETOOLS_OK，系统利用掉电保持的标志区接口（load_write_config_which(LOAD_APP_USER)）更新引导指向，随后调用 NVIC_SystemReset() 触发 MCU 软件复位。
-    + Bootloader 二次接管：复位后，系统首先进入 LOADER 区的纯 C 语言启动文件（reset_handler），通过检查启动参数无误后，更新主栈指针（__set_MSP）并修改向量表偏移（SCB->VTOR），最终跳转执行全新的 App 程序，完成整个差分升级的生命周期闭环。
+    + Bootloader 二次接管：复位后，系统首先进入 LOADER 区的纯 C 语言启动文件（reset_handler），通过检查启动参数无误后，更新主栈指针（#str("__set_MSP")）并修改向量表偏移（SCB->VTOR），最终跳转执行全新的 App 程序，完成整个差分升级的生命周期闭环。
   ]
   #par[]
 
   = 系统测试与分析
 
   #par[]
-  - 验证系统的稳定性与各项指标。
-  #par[]
 
   == 测试环境配置
+  
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    交代测试的基础条件，保证实验的“可重复性”。
+  ]
+  #par[]
+
+  === 硬件平台说明
 
   #par[]
-  - 介绍测试使用的MCU平台（型号、主频、Flash/RAM大小）、编译工具链、PC端差分包生成工具。
+  #block()[
+    #set list(
+      indent: 12pt * 2,
+    )
+    - MCU型号：STM32H743IIT6，主频480MHz，Flash总容量2MB，RAM总容量1MB
+    - 开发板：STM32H743IIT6核心系统板
+    - 烧录器：DAP-Link
+    - 日志打印：USART1，波特率：115200
+    - 文件传输：UART4，波特率：115200
+  ]
+  #par[]
+
+  === 软件与工具链配置
+
+  #par[]
+  #block()[
+    #set list(
+      indent: 12pt * 2,
+    )
+    - 代码编辑器：VS Code 与 EIDE 插件
+    - 工具链：arm-none-eabi-gcc，版本：15.2.1 20251203
+    - c 标准：gnu23
+    - 优化等级：-Og
+    - RT-Thread-Nano 版本号：4.1.1
+    - detools 版本号：0.53.0
+    - 串口终端：MobaXterm，版本号：25.4
+    - 文件传输：Tera Term，版本号：5.6.0
+  ]
   #par[]
 
   == 启动与文件传输功能测试
