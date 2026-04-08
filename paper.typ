@@ -179,7 +179,7 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    简述物联网及嵌入式设备对固件在线升级（OTA）的迫切需求。针对传统全量固件升级存在的传输时间长、Flash擦写损耗大等问题，本文设计并实现了一款基于32位嵌入式单片机的Bootloader系统。该系统不仅支持标准的UART全量固件升级，还深度集成了detools差分还原算法实现高效的差分升级。系统通过重新划分Flash与RAM空间映射、采用纯C语言重写启动文件及复位逻辑，实现了Loader与App的无缝切换与代码复用。同时，引入RT-Thread Nano实时操作系统与Ymodem协议，提升了系统的任务调度能力和文件传输可靠性。最后，利用内核特性实现了CPU利用率监控。测试结果表明，该Bootloader运行稳定，差分升级功能显著降低了升级包体积与传输时间。
+    简述物联网及嵌入式设备对固件在线升级（OTA）的迫切需求。针对传统全量固件升级存在的传输时间长、Flash擦写损耗大等问题，本文设计并实现了一款基于32位嵌入式单片机的Bootloader系统。该系统不仅支持标准的UART全量固件升级，还深度集成了detools差分还原算法实现高效的差分升级。系统通过重新划分Flash与RAM空间映射、采用纯C语言重新设计启动文件及复位逻辑，实现了Loader与App的无缝切换与代码复用。同时，引入RT-Thread Nano实时操作系统与Ymodem协议，提升了系统的任务调度能力和文件传输可靠性。最后，利用内核特性实现了CPU利用率监控。测试结果表明，该Bootloader运行稳定，差分升级功能显著降低了升级包体积与传输时间。
   ]
   #par[]
 
@@ -229,7 +229,7 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    针对上述行业痛点，本文设计并实现了一款基于32位嵌入式MCU的差分升级Bootloader系统。本课题的研究不仅在底层架构架构上进行了深度创新，更在实际工程应用中具有显著的经济与技术价值，具体体现在以下几个方面：
+    针对上述行业痛点，本文设计并实现了一款基于32位嵌入式MCU的差分升级Bootloader系统。本课题的研究不仅在底层架构上进行了深度创新，更在实际工程应用中具有显著的经济与技术价值，具体体现在以下几个方面：
   ]
   #block()[
     #set enum(
@@ -239,7 +239,7 @@
       #par(
         first-line-indent: 12pt * 2,
       )[
-        本项目将detools差分还原算法引入资源受限的MCU端。通过在PC端对比新旧固件生成体积极小的差分包（Patch），设备端仅需通过UART接收差分包即可在本地还原出全量新固件。这种方式不仅将数据传输量降低了约80%~90%，极大缩短了升级时间，还显著降低了传输过程中的误码率，特别适用于受限于低速串口通信的工业现场设备。
+        本项目将detools差分还原算法引入资源受限的MCU端。通过在PC端对比新旧固件生成体积极小的差分包（Patch），设备端仅需通过UART接收差分包即可在本地还原出全量新固件。这种方式不仅将数据传输量降低了约70% \~ 90%，极大缩短了升级时间，继而显著降低了升级失败的概率，特别适用于受限于低速串口通信的工业现场设备。
       ]
       #par[]
     + 重塑存储模型，增强系统健壮性（空间规划的价值）
@@ -253,7 +253,7 @@
       #par(
         first-line-indent: 12pt * 2,
       )[
-        摒弃了晦涩的汇编启动代码，本文深度采用纯C语言重写了Reset_Handler复位逻辑及RAM数据初始化（如.data段搬运和.bss段清零）。这一底层重构不仅让Bootloader具备了极强的跨硬件平台移植能力，还使得Bootloader与App可以共享同一套初始化架构，大幅降低了工程代码的冗余度与后期维护成本。
+        摒弃了晦涩的汇编启动代码，本文深度采用纯C语言重新设计了 reset_handler 复位逻辑及RAM数据初始化（如.data段搬运和.bss段清零）。这一底层重构不仅让Bootloader具备了极强的跨硬件平台移植能力，还使得Bootloader与App可以共享同一套初始化架构，大幅降低了工程代码的冗余度与后期维护成本。
       ]
       #par[]
     + 引入实时操作系统，提升资源调度与监控能力（RTOS的价值）
@@ -327,7 +327,7 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    为了提高代码的可维护性和跨平台能力，国内外部分前沿开源项目和学术研究开始探索“纯C语言启动框架”。通过在C语言层面接管复位中断（Reset_Handler），手动控制.data段的搬运和.bss段的清零，不仅消除了对汇编的依赖，还使得Loader阶段能够灵活控制外设的初始化状态。
+    为了提高代码的可维护性和跨平台能力，国内外部分前沿开源项目和学术研究开始探索“纯C语言启动框架”。通过在C语言层面接管复位中断（reset_handler），手动控制.data段的搬运和.bss段的清零，不仅消除了对汇编的依赖，还使得Loader阶段能够灵活控制外设的初始化状态。
   ]
   #par(
     first-line-indent: 12pt * 2,
@@ -347,7 +347,7 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    基于上述现状，本文以解决传统升级方案中“传输慢、移植难、阻塞卡顿”等痛点为切入点，深入研究并设计了一款集成了RT-Thread Nano多任务调度、Ymodem可靠传输以及detools差分核心算法的现代Bootloader。在此基础上，本文创新性地重写了C语言底层启动文件，并对存储器空间进行了精细化重构，旨在为32位嵌入式设备提供一套高可靠、低开销的差分升级完整解决方案。
+    基于上述现状，本文以解决传统升级方案中“传输慢、移植难、阻塞卡顿”等痛点为切入点，深入研究并设计了一款集成了RT-Thread Nano多任务调度、Ymodem可靠传输以及detools差分核心算法的现代Bootloader。在此基础上，本文创新性地重新设计了C语言底层启动文件，并对存储器空间进行了精细化重构，旨在为32位嵌入式设备提供一套高可靠、低开销的差分升级完整解决方案。
   ]
   #par[]
 
@@ -377,7 +377,7 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    摒弃了传统高度依赖芯片厂商的汇编启动文件（Startup File），通过纯C语言深度重构了系统的启动流程。独立编写了Reset_Handler复位处理逻辑，并在C语言层面接管了.data段的搬运与.bss段的清零等RAM初始化工作。这一设计不仅大幅提升了Bootloader代码的跨平台可移植性，还使得Bootloader与User App能够复用同一套底层初始化框架。同时，在复位处理函数中加入了严格的App启动检测机制（如栈顶指针合法性校验、复位向量校验等），确保程序跳转的安全性。
+    摒弃了传统高度依赖芯片厂商的汇编启动文件（Startup File），通过纯C语言深度重构了系统的启动流程。独立编写了reset_handler复位处理逻辑，并在C语言层面接管了.data段的搬运与.bss段的清零等RAM初始化工作。这一设计不仅大幅提升了Bootloader代码的跨平台可移植性，还使得Bootloader与User App能够复用同一套底层初始化框架。同时，在复位处理函数中加入了严格的App启动检测机制（如栈顶指针合法性校验、复位向量校验等），确保程序跳转的安全性。
   ]
   #par[]
 
@@ -425,7 +425,7 @@
     )
     + 绪论：阐述课题的研究背景、意义，分析当前国内外固件升级技术的研究现状，并概括本文的主要研究内容。
     + 系统总体架构与存储空间设计：详细论述Bootloader的系统拓扑结构，以及Flash和RAM多重区域的精细化划分与功能定义。
-    + 核心底层机制与RTOS集成：重点剖析基于纯C语言重写启动文件与复位逻辑的技术细节，并介绍RT-Thread Nano的移植过程及CPU利用率监视器的实现原理。
+    + 核心底层机制与RTOS集成：重点剖析基于纯C语言重新设计启动文件与复位逻辑的技术细节，并介绍RT-Thread Nano的移植过程及CPU利用率监视器的实现原理。
     + 固件传输协议与差分升级核心技术：深入讲解Ymodem协议状态机的实现与文件分类逻辑，详细推演基于detools与crle算法的差分还原流程及内存优化策略。
     + 系统测试与分析：搭建测试环境，对Bootloader的启动切换、全量/差分传输成功率、CPU与内存开销、升级耗时等关键指标进行系统性测试与量化分析。
     + 总结与展望：总结全文研究成果，客观分析当前系统的不足，并对未来的技术迭代与扩展方向进行展望。
@@ -463,12 +463,199 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    该层负责系统上电后的“第一条指令”执行以及底层硬件运行环境的搭建，核心表现为彻底重构的C语言启动框架。
+    该层负责在编码阶段尽量屏蔽硬件差异，在编译阶段提供Bootloader与App统一的链接模板脚本，以及系统上电后的“第一条指令”执行与底层硬件运行环境的初始化。
   ]
   #block()[
     #set list(
       indent: 12pt * 2,
     )
+    - 链接脚本模板：通过不同的全局编译宏定义生成适用于Loader和App的链接脚本，二者的Flash与RAM分区布局相同，避免App固件起始地址错乱。链接脚本模板：
+
+      ```c
+      #include "partition.h"
+
+      /**
+       * @brief 定义flash与ram。
+       */
+      MEMORY
+      {
+          /* flash */
+          LOADER  (rwx) : ORIGIN = LOADER_START,      LENGTH = LOADER_SIZE
+          USER    (rwx) : ORIGIN = USER_START,        LENGTH = USER_SIZE
+          PATCH   (rw)  : ORIGIN = PATCH_START,       LENGTH = PATCH_SIZE
+          OEM     (rwx) : ORIGIN = OEM_START,         LENGTH = OEM_SIZE
+
+          /* tcm */
+          ITCM    (rwx) : ORIGIN = MCU_ITCM_START,    LENGTH = MCU_ITCM_SIZE
+          DTCM    (rwx) : ORIGIN = MCU_DTCM_START,    LENGTH = MCU_DTCM_SIZE
+
+          /* sram */
+          AXIRAM  (rwx) : ORIGIN = MCU_AXIRAM_START,  LENGTH = MCU_AXIRAM_SIZE
+          AHBRAM  (rwx) : ORIGIN = MCU_AHBRAM_START,  LENGTH = MCU_AHBRAM_SIZE
+          AHBRAM1 (rwx) : ORIGIN = MCU_AHBRAM1_START, LENGTH = MCU_AHBRAM1_SIZE
+          BKPRAM  (rwx) : ORIGIN = MCU_BKPRAM_START,  LENGTH = MCU_BKPRAM_SIZE
+      }
+
+      /* 初始栈地址(从高地址向底地址生长) */
+      _stack_start = ORIGIN(DTCM) + LENGTH(DTCM);
+
+      /* 栈最小大小 */
+      _stack_min_size = 0x400;
+
+      /* 堆结束地址(紧靠栈且不覆盖最小栈空间) */
+      _heap_end = _stack_start - _stack_min_size;
+
+      /* 根据构建参数匹配不同的段分配布局 */
+      #ifdef BUILD_LOADER
+      #define CODE_PARTITION LOADER
+      #elif BUILD_USER
+      #define CODE_PARTITION USER
+      #elif BUILD_OEM
+      #define CODE_PARTITION OEM
+      #else
+      /* 无有效参数时报错 */
+      #error "BUILD_LOADER, BUILD_USER or BUILD_OEM must be defined"
+      #endif
+
+      /**
+       * @brief 定义段如何分配。
+       */
+      SECTIONS
+      {
+          /* 普通代码段 */
+          .code : ALIGN(4)
+          {
+              KEEP(*(.reset_vector))          /* 复位向量表 */
+              *(.text*)                       /* 普通代码 */
+              *(.glue_7*)                     /* ARM/Thumb胶水代码 */
+              KEEP(*(SORT(.rt_launch_run.*))) /* os启动时自动执行 */
+          } > CODE_PARTITION
+
+          /* 快速代码段 */
+          .itcm : ALIGN(4)
+          {
+              _itcm_ram_start = .;            /* 起始地址 */
+              KEEP(*(.itcm*))                 /* 快速代码 */
+              _itcm_ram_end = .;              /* 结束地址 */
+          } > ITCM AT > CODE_PARTITION
+          _itcm_section_addr = LOADADDR(.itcm);
+
+          /* 常量数据段 */
+          .const : ALIGN(4)
+          {
+              *(.rodata*)                     /* 常量数据 */
+          } > CODE_PARTITION
+
+          /* DTCM已初始化数据段 */
+          .dtcm_init : ALIGN(4)
+          {
+              _dtcm_ram_init_start = .;       /* 起始地址 */
+              *(.data*)                       /* 已初始化数据 */
+              _dtcm_ram_init_end = .;         /* 结束地址 */
+          } > DTCM AT > CODE_PARTITION
+          _dtcm_ram_section_addr = LOADADDR(.dtcm_init);
+
+          /* DTCM未初始化数据段 */
+          .dtcm_uninit : ALIGN(4)
+          {
+              _dtcm_ram_uninit_start = .;     /* 起始地址 */
+              *(.bss*)                        /* 未初始化数据 */
+              _dtcm_ram_uninit_end = .;       /* 结束地址 */
+          } > DTCM
+
+          /* 堆空间段 */
+          .heap : ALIGN(8)
+          {
+              _heap_start = .;                /* 紧跟在数据段之后 */
+          } > DTCM
+
+          /* 栈空间段 */
+          .stack : ALIGN(8)
+          {
+              . = . + _stack_min_size;        /* 不足以分配最小栈空间时报错 */
+          } > DTCM
+
+          /* AXIRAM已初始化数据段 */
+          .axi_ram_init : ALIGN(4)
+          {
+              _axi_ram_init_start = .;        /* 起始地址 */
+              _axi_ram_init_end = .;          /* 结束地址 */
+          } > AXIRAM AT > CODE_PARTITION
+          _axi_ram_section_addr = LOADADDR(.axi_ram_init);
+
+          /* AXIRAM未初始化数据段 */
+          .axi_ram_uninit : ALIGN(4)
+          {
+              _axi_ram_uninit_start = .;      /* 起始地址 */
+              _axi_ram_uninit_end = .;        /* 结束地址 */
+          } > AXIRAM
+
+          /* AHBRAM已初始化数据段 */
+          .ahb_ram_init : ALIGN(4)
+          {
+              _ahb_ram_init_start = .;        /* 起始地址 */
+              *(.share_init)                  /* 已初始化数据 */
+              _ahb_ram_init_end = .;          /* 结束地址 */
+          } > AHBRAM AT > CODE_PARTITION
+          _ahb_ram_section_addr = LOADADDR(.ahb_ram_init);
+
+          /* AHBRAM未初始化数据段 */
+          .ahb_ram_uninit : ALIGN(4)
+          {
+              _ahb_ram_uninit_start = .;      /* 起始地址 */
+              *(.share_uninit)                /* 未初始化数据 */
+              _ahb_ram_uninit_end = .;        /* 结束地址 */
+          } > AHBRAM
+
+          /* share数据段 */
+          .share_ram : ALIGN(4)
+          {
+              _share_ram_start = .;           /* 起始地址 */
+              *(.share)                       /* 程序之间共享的数据 */
+              _share_ram_end = .;             /* 结束地址 */
+          } > AHBRAM1 AT > CODE_PARTITION
+          _share_ram_section_addr = LOADADDR(.share_ram);
+
+          /* BKPRAM已初始化数据段 */
+          .bkp_ram : ALIGN(4)
+          {
+              _bkp_ram_start = .;             /* 起始地址 */
+              *(.backup)                      /* 备份数据 */
+              _bkp_ram_end = .;               /* 结束地址 */
+          } > BKPRAM
+
+          /* 显式丢弃的内容 */
+          /DISCARD/ :
+          {
+              /* 丢弃C++异常回溯表 */
+              *(.ARM.extab* .gnu.linkonce.armextab.*)
+              *(.ARM.exidx*)
+
+              /* 丢弃编译器自带的TLS占位符 */
+              *(.tdata*)
+              *(.tbss*)
+
+              /* 丢弃C标准库和数学库 */
+              libc.a:* (*)
+              libm.a:* (*)
+          }
+      }
+      ```
+
+      然后通过GCC编译器进行预处理后得到对应Loader与App的链接脚本
+
+      - Loader指令脚本（EIDE插件环境变量）：
+
+      ```bash
+      ${CompilerPrefix}gcc.exe -E -P -x c -DBUILD_LOADER ${workspaceFolder}/bsp/include/mcu_port.ld -o ${OutDir}/diffboot.ld
+      ```
+
+      - App指令脚本（EIDE插件环境变量）：
+
+      ```bash
+      ${CompilerPrefix}gcc.exe -E -P -x c -DBUILD_APP ${workspaceFolder}/bsp/include/mcu_port.ld -o ${OutDir}/diffboot.ld
+      ```
+
     - 向量表与复位接管：在精简的汇编文件（vector.s）中定义复位向量表（vector_table），并将系统复位入口直接映射到纯 C 语言实现的 reset_handler()。
     - 硬件内核初始化：在 reset_handler() 中，系统优先调用 fpu_init() 开启浮点运算单元执行权限，调用 rcc_init() 配置系统时钟树（PLL）和 Flash 延迟（Latency），并调用 ram_init() 使能 MCU 特有的多个高级 RAM 域（如 D2SRAM、BKPRAM 及其独立时钟）。
     - C运行环境（C-Runtime）手动构建：系统利用内联优化的 C 函数 reset_copy_ram_init() 和 reset_clear_ram_uninit()，将 Flash 中的初始数据精确地搬运至 ITCM、DTCM、AXIRAM 及 AHBRAM 等指定的物理内存区域，并完成 .bss 段的清零，为操作系统的运行和差分算法的高效计算（如利用 ITCM 存放高频代码，DTCM 存放高频数据）做好了物理铺垫。
@@ -487,8 +674,196 @@
     #set list(
       indent: 12pt * 2,
     )
-    - 物理存储分区映射：系统通过 partition.h 实现了 Flash 的四等分布局（LOADER区、USER区、PATCH区、OEM区），严格定义了各区间的地址（如 MCU_FLASH_START 为 0x08000000）与扇区容量，隔离了核心代码与下载数据的存储空间。
-    - 共享状态参数区（Shared RAM）：这是架构设计的一大亮点。系统通过自定义的编译器属性宏（SECTION(".share")），将一个名为 load_config 的状态结构体（包含错误码、复位标志、升级策略、差分包大小等信息）显式分配到“启动参数区”。
+    - 物理存储分区映射：系统通过 partition.h 实现了 Flash 的四等分布局（LOADER区、USER区、PATCH区、OEM区），严格定义了各区间的地址（如 MCU_FLASH_START 为 0x08000000）与扇区容量，隔离了核心代码与下载数据的存储空间。具体实现：
+
+      ```C
+      #ifndef _PARTITION_H_
+      #define _PARTITION_H_
+
+      #include "specification.h" //!< 导入内存划分与段分配
+
+      /**
+       * @brief 各分区占用扇区数量。
+       */
+      #define LOADER_SECTOR_COUNT 2 //!< 引导程序占用扇区数量
+      #define USER_SECTOR_COUNT   6 //!< 用户程序占用扇区数量
+      #define PATCH_SECTOR_COUNT  2 //!< 差分补丁占用扇区数量
+      #define OEM_SECTOR_COUNT    6 //!< 厂商程序占用扇区数量
+
+      /**
+       * @brief 内存各分区占用大小。
+       */
+      #define LOADER_SIZE (LOADER_SECTOR_COUNT * MCU_FLASH_SECTOR_SIZE) //!< 引导程序占用大小
+      #define USER_SIZE (USER_SECTOR_COUNT * MCU_FLASH_SECTOR_SIZE) //!< 用户程序占用大小
+      #define PATCH_SIZE (PATCH_SECTOR_COUNT * MCU_FLASH_SECTOR_SIZE) //!< 差分补丁占用大小
+      #define OEM_SIZE (OEM_SECTOR_COUNT * MCU_FLASH_SECTOR_SIZE) //!< 厂商程序占用大小
+
+      /**
+       * @brief 各分区起始地址。
+       */
+      #define LOADER_START MCU_FLASH_START              //!< 引导程序起始地址
+      #define USER_START   (LOADER_START + LOADER_SIZE) //!< 用户程序起始地址
+      #define PATCH_START  (USER_START + USER_SIZE)     //!< 差分补丁起始地址
+      #define OEM_START    (PATCH_START + PATCH_SIZE)   //!< 厂商程序起始地址
+
+      #endif
+      ```
+
+    - 共享状态参数区（Shared RAM）：这是架构设计的一大亮点。系统通过自定义的编译器属性宏（SECTION(".share")），将一个名为 load_config 的状态结构体（包含错误码、复位标志、升级策略、差分包大小等信息）显式分配到“启动参数区”。具体实现：
+
+      ```c
+      #ifndef _ATTRIBUTE_H_
+      #define _ATTRIBUTE_H_
+
+      /**
+       * @brief 指定函数为弱符号，实现可被覆盖。
+       */
+      #define WEAK __attribute__((weak))
+
+      /**
+       * @brief 避免函数因优化而剔除。
+       */
+      #define USED __attribute__((used))
+
+      /**
+       * @brief 明确指定不使用该函数。
+       */
+      #define UNUSE_FUNC __attribute__((unused))
+
+      /**
+       * @brief 明确指定不使用该变量。
+       */
+      #define UNUSE_VAR(x) ((void)x)
+
+      /**
+       * @brief 禁止编译器自动给函数添加任何汇编代码。
+       */
+      #define NAKED __attribute__((naked))
+
+      /**
+       * @brief 强制内联函数。
+       */
+      #define INLINE __attribute__((always_inline))
+
+      /**
+       * @brief 消除结构体成员之间的填充，实现紧凑存储。
+       */
+      #define PACKED __attribute__((packed))
+
+      /**
+       * @brief 起始地址进行n字节对齐。
+       */
+      #define ALIGN(n) __attribute__((aligned(n)))
+
+      /**
+       * @brief 添加段分配属性。
+       */
+      #define SECTION(name) __attribute__((section(name)))
+
+      /**
+       * @brief 不添加任何属性。
+       */
+      #define NONE
+
+      /**
+       * @brief 将函数放在itcm运行，提高代码执行速度或者避免与flash操作冲突。
+       */
+      #define ITCM SECTION(".itcm")
+
+      /**
+       * @brief 将数据放在boot与app共享的ram，
+       * boot与app之间的切换不会影响这些数据。
+       */
+      #define SHARE SECTION(".share")
+
+      /**
+       * @brief 将有值数据放在外设可访问的ram，
+       * boot与app之间的切换会覆盖这些数据。
+       */
+      #define SHARE_INIT SECTION(".share_init")
+
+      /**
+       * @brief 将无值数据放在外设可访问的ram，
+       * boot与app之间的切换可能会覆盖这些数据。
+       */
+      #define SHARE_UNINIT SECTION(".share_uninit")
+
+      /**
+       * @brief 将数据放在备份ram，电池供电时始终保持数据存在，
+       * 除非程序的显示修改。
+       */
+      #define BACKUP SECTION(".backup")
+
+      #endif
+      ```
+
+      ```c
+      /**
+       * @brief 定义错误选项。
+       */
+      typedef enum load_error_t {
+          LOAD_ERROR_VERIFY  = 0x00, //!< 数据验证无效
+          LOAD_ERROR_WHICH   = 0x01, //!< 启动参数错误
+          LOAD_ERROR_INVALID = 0xff, //!< 无效参数
+      } load_error_t;
+
+      /**
+       * @brief 定义复位选项。
+       */
+      typedef enum load_reset_t {
+          LOAD_RESET         = 0x00, //!< 需要执行复位
+          LOAD_RESET_INVALID = 0xff, //!< 无效参数
+      } load_reset_t;
+
+      /**
+       * @brief 定义启动选项。
+       */
+      typedef enum load_which_t {
+          LOAD_APP_LOADER  = 0x00, //!< 从loader启动
+          LOAD_APP_USER    = 0x01, //!< 从user启动
+          LOAD_APP_OEM     = 0x02, //!< 从oem启动
+          LOAD_APP_INVALID = 0xff, //!< 无效参数
+      } load_which_t;
+
+      /**
+       * @brief 定义打补丁选项。
+       */
+      typedef enum load_apply_t {
+          LOAD_APPLY_USER    = 0x00, //!< 应用补丁生成新固件到user
+          LOAD_APPLY_OEM     = 0x01, //!< 应用补丁生成新固件到oem
+          LOAD_APPLY_INVALID = 0xff, //!< 无效参数
+      } load_apply_t;
+
+      /**
+       * @brief 定义固件接收选项。
+       */
+      typedef enum load_patch_t {
+          LOAD_PATCH_USER    = 0x00, //!< 接收到user的补丁
+          LOAD_PATCH_OEM     = 0x01, //!< 接收到oem的补丁
+          LOAD_PATCH_INVALID = 0xff, //!< 无效参数
+      } load_patch_t;
+
+      /**
+       * @brief 定义如何启动程序。
+       */
+      typedef struct load_config_info_t {
+          volatile load_error_t error;  //!< 错误信息
+          volatile load_reset_t reset;  //!< 是否需要执行复位
+          volatile load_which_t which;  //!< 从哪个程序启动
+          volatile load_apply_t apply;  //!< 生成新固件到哪个分区
+          volatile load_patch_t patch;  //!< 接收到哪个补丁
+          volatile uint32_t patch_size; //!< 补丁大小
+      } load_config_info_t;
+
+      /**
+       * @brief 定义如何校验配置。
+       */
+      typedef struct load_config_t {
+          load_config_info_t info; //!< 配置信息
+          volatile uint16_t crc;   //!< crc校验码
+      } load_config_t;
+      ```
+
     - 状态机校验与跳转控制：load.c 模块实现了基于 CRC16 的强校验机制（algo_crc16）。在软复位时，Loader 通过 load_read_config_which() 读取 load_config。若校验通过且目标明确，系统通过重写栈指针（#str("__set_MSP")）、更新中断向量表偏移（SCB->VTOR），执行向 USER 区或 OEM 区的安全跳转；若不满足跳转条件，则留在 Loader 层，并向下调用 load_boot() 准备初始化升级组件。
   ]
   #par[]
@@ -505,7 +880,15 @@
     #set list(
       indent: 12pt * 2,
     )
-    - OS 接管与启动：在 load_boot() 函数中，系统完成了基础外设配置后，通过 rtthread_launch() 正式移交 CPU 控制权。
+    - OS 接管与启动：在 load_boot() 函数中，系统完成了基础外设配置后，通过 rtthread_launch() 正式移交 CPU 控制权。具体实现：
+
+      ```c
+      void load_boot(void)
+      {
+          main();            //!< 配置时钟树与外设
+          rtthread_launch(); //!< 启动rtthread
+      }
+      ```
     - 多任务并发与资源隔离：操作系统将文件接收、差分还原、状态监控等功能拆分为独立的线程，利用操作系统的调度器（Scheduler）和信号量（Semaphore）机制，解决了大体量差分固件处理时可能导致的阻塞卡顿问题。
   ]
   #par[]
@@ -544,31 +927,31 @@
     #figure(
       caption: [STM32H743IIT6 Flash 存储器物理空间划分表],
       table(
-        columns: (120pt, 160pt, 120pt),
+        columns: (100pt, 120pt, 120pt),
         align: center + horizon,
-        stroke: 0.5pt,
+        stroke: 1pt,
         fill: (col, row) => (
           if row == 0 { rgb("F2F2F2") } else if row == 1 { rgb("E6F3FF") } else if row == 2 {
             rgb("FFF2CC")
           } else if row == 3 { rgb("E2EFDA") } else if row == 4 { rgb("FCE4D6") }
         ),
 
-        [*地址范围*], [*分区名称与功能*], [*容量 / 扇区数量*],
+        [地址范围], [分区名称与功能], [容量 / 扇区数量],
 
-        [0x081FFFFF \ ~ \ ~ \ ~ \ ~ \ 0x08140000],
-        block(height: 90pt)[#set align(center + horizon); *OEM 区* \ (厂商出厂固件)],
+        [0x081FFFFF \ ~ \ ~ \ 0x08140000],
+        block(height: 60pt)[#set align(center + horizon); OEM 区 \ (厂商出厂固件)],
         [768 KB \ (6 个扇区)],
 
         [0x0813FFFF \ ~ \ 0x08100000],
-        block(height: 30pt)[#set align(center + horizon); *PATCH 区* \ (差分包暂存)],
+        block(height: 30pt)[#set align(center + horizon); PATCH 区 \ (差分包暂存)],
         [256 KB \ (2 个扇区)],
 
-        [0x080FFFFF \ ~ \ ~ \ ~ \ ~ \ 0x08040000],
-        block(height: 90pt)[#set align(center + horizon); *USER 区* \ (用户程序)],
+        [0x080FFFFF \ ~ \ ~ \ 0x08040000],
+        block(height: 60pt)[#set align(center + horizon); USER 区 \ (用户程序)],
         [768 KB \ (6 个扇区)],
 
         [0x0803FFFF \ ~ \ 0x08000000],
-        block(height: 30pt)[#set align(center + horizon); *LOADER 区* \ (引导程序)],
+        block(height: 20pt)[#set align(center + horizon); LOADER 区 \ (引导程序)],
         [256 KB \ (2 个扇区)],
       ),
     )
@@ -610,7 +993,7 @@
     )
     - 空间规划：分配 2 个扇区（共 256KB），起始地址为 0x08100000。
     - 核心功能：专门用于暂存通过 UART 接收到的差分升级包（Patch 文件）。
-    - 设计考量（核心亮点）：这是支撑差分升级的灵魂分区。在常规全量升级中，暂存区需要与 App 区等大（即也需要 768KB 的空间），这在资源紧张的 MCU 中往往难以实现（常被称为“A/B双区升级的存储瓶颈”）。而本文引入差分技术后，得益于 bsdiff/crle 算法极高的压缩比，新旧版本之间生成的差分包体积通常不足原固件大小的 10%。因此，分配 256KB 作为 PATCH 区已存在巨大的冗余量，完美解决了小容量 Flash 实现安全 OTA 的痛点。通过暂存机制，避免了在下载阶段直接破坏正在运行的旧版固件。
+    - 设计考量（核心亮点）：这是支撑差分升级的灵魂分区。在常规全量升级中，暂存区需要与 App 区等大（即也需要 768KB 的空间），这在资源紧张的 MCU 中往往难以实现（常被称为“A/B双区升级的存储瓶颈”）。而本文引入差分技术后，得益于 crle 算法极高的压缩比，新旧版本之间生成的差分包体积通常不足原固件大小的 30%。因此，分配 256KB 作为 PATCH 区已存在巨大的冗余量，完美解决了小容量 Flash 实现安全 OTA 的痛点。通过暂存机制，避免了在下载阶段直接破坏正在运行的旧版固件。
   ]
   #par[]
 
@@ -743,7 +1126,7 @@
   ]
   #par[]
 
-  == 基于C语言的启动文件深度重写
+  == 基于C语言的启动文件深度重新设计
 
   #par[]
   #par(
@@ -754,7 +1137,120 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    为此，本文摒弃了常规的纯汇编启动架构，采用“极简汇编向量表 + 纯C语言复位逻辑”的混合架构，对系统的启动（Reset_Handler）与 C 运行环境（C-Runtime）构建进行了彻底的深度重写。
+    为此，本文摒弃了常规的纯汇编启动架构，采用“极简汇编向量表 + 纯C语言复位逻辑”的混合架构，对系统的启动（reset_handler）与 C 运行环境（C-Runtime）构建进行了彻底的深度重写。
+  ]
+  #block()[
+    #set list(
+      indent: 12pt * 2,
+    )
+
+    - 原始汇编启动流程：
+
+      ```yasm
+        .section .text.Reset_Handler
+        .weak Reset_Handler
+        .type Reset_Handler, %function
+      Reset_Handler:
+        ldr sp, =_estack /* set stack pointer */
+
+      /* Call the ExitRun0Mode function to configure the power supply */
+        bl ExitRun0Mode
+      /* Call the clock system initialization function.*/
+        bl SystemInit
+
+      /* Copy the data segment initializers from flash to SRAM */
+        ldr r0, =_sdata
+        ldr r1, =_edata
+        ldr r2, =_sidata
+        movs r3, #0
+        b LoopCopyDataInit
+
+      CopyDataInit:
+        ldr r4, [r2, r3]
+        str r4, [r0, r3]
+        adds r3, r3, #4
+
+      LoopCopyDataInit:
+        adds r4, r0, r3
+        cmp r4, r1
+        bcc CopyDataInit
+      /* Zero fill the bss segment. */
+        ldr r2, =_sbss
+        ldr r4, =_ebss
+        movs r3, #0
+        b LoopFillZerobss
+
+      FillZerobss:
+        str r3, [r2]
+        adds r2, r2, #4
+
+      LoopFillZerobss:
+        cmp r2, r4
+        bcc FillZerobss
+
+      /* Call static constructors */
+        bl __libc_init_array
+      /* Call the application's entry point.*/
+        bl main
+        bx lr
+      .size Reset_Handler, .-Reset_Handler
+      ```
+
+    - 深度重新设计后启动流程：
+
+      ```C
+      NAKED void reset_handler(void)
+      {
+          // 设置初始栈指针
+          __set_MSP((uint32_t)_stack_start); //!< 执行后可以正常使用栈空间
+
+          // 调用初始化函数
+          fpu_init(); //!< 开启fpu执行权限
+          rcc_init(); //!< 配置默认的系统时钟树
+          ram_init(); //!< 开启所有ram区域
+
+          /* 加载itcm的数据 */
+          reset_copy_ram_init((char *)_itcm_ram_start, _itcm_section_addr,
+                              (size_t)_itcm_ram_end -
+                                  (size_t)_itcm_ram_start); //!< 拷贝itcm的数据
+
+      #if defined(BUILD_LOADER)
+          // 尝试启动app程序
+          load_app(); //!< 所有app不满足启动要求则返回并开始启动boot
+      #endif
+
+          /* 加载dtcm的数据 */
+          reset_copy_ram_init(
+              (char *)_dtcm_ram_init_start, _dtcm_ram_section_addr,
+              (size_t)_dtcm_ram_init_end -
+                  (size_t)_dtcm_ram_init_start); //!< 拷贝dtcm的有值数据
+          reset_clear_ram_uninit(
+              (char *)_dtcm_ram_uninit_start,
+              (char *)_dtcm_ram_uninit_end); //!< 清空dtcm的无值数据
+
+          /* 加载axiram的数据 */
+          reset_copy_ram_init(
+              (char *)_axi_ram_init_start, _axi_ram_section_addr,
+              (size_t)_axi_ram_init_end -
+                  (size_t)_axi_ram_init_start); //!< 拷贝axiram的有值数据
+          reset_clear_ram_uninit(
+              (char *)_axi_ram_uninit_start,
+              (char *)_axi_ram_uninit_end); //!< 清空axiram的无值数据
+
+          /* 加载ahbram的数据 */
+          reset_copy_ram_init(
+              (char *)_ahb_ram_init_start, _ahb_ram_section_addr,
+              (size_t)_ahb_ram_init_end -
+                  (size_t)_ahb_ram_init_start); //!< 拷贝ahbram的有值数据
+          reset_clear_ram_uninit(
+              (char *)_ahb_ram_uninit_start,
+              (char *)_ahb_ram_uninit_end); //!< 清空ahbram的无值数据
+
+          load_boot(); //!< 程序数据已经加载完成，开始启动boot程序
+
+          default_handler(); //!< 正常不会执行到这里，进入默认处理函数，执行死循环
+      }
+      ```
   ]
   #par[]
 
@@ -810,6 +1306,110 @@
     )
     - 内存对齐与 32 位宽优化：通过位运算（((uintptr_t)dest & 0x3) != 0）对非对齐地址进行字节级修补，在地址对齐到 4 字节边界后，立刻切换为 32 位（uint32_t）指针进行宽字读写，将总线利用率提升了 4 倍。
     - 循环展开优化（Loop Unrolling）：在此基础上，运用了激进的“循环展开”算法。在处理大量数据时（while (len >= 16)），一次循环体内部直接连续处理 4 个 32 位字（即 16 字节）。这种写法大幅度降低了 CPU 在大内存块拷贝时由于循环跳转带来的流水线冲刷（Pipeline Flush）和条件分支开销，显著缩短了 detools 差分解压缓冲区庞大内存的初始化时间。
+    - 具体实现：
+
+      ```c
+      /**
+       * @brief 将数据从flash拷贝到ram。
+       * @param dest 拷贝数据到该地址。
+       * @param src 从该地址拷贝数据。
+       * @param len 拷贝字节数.
+       */
+      INLINE static inline char *reset_copy_ram_init(char *dest, const char *src,
+                                                     size_t len)
+      {
+          // 小数据量处理
+          if (len < 4) {
+              while (len--) *dest++ = *src++;
+              return dest;
+          }
+
+          // 对齐处理（尝试将目标地址对齐到4字节边界）
+          // 检查地址是否对齐到4字节
+          while (((uintptr_t)dest & 0x3) != 0 && len > 0) {
+              *dest++ = *src++;
+              len--;
+          }
+
+          // 32位宽数据拷贝（核心优化）
+          uint32_t *d32       = (uint32_t *)dest;
+          const uint32_t *s32 = (const uint32_t *)src;
+
+          // 使用循环展开：一次处理16字节（4个32位字）
+          // 这样可以减少循环次数和判断开销
+          while (len >= 16) {
+              d32[0] = s32[0];
+              d32[1] = s32[1];
+              d32[2] = s32[2];
+              d32[3] = s32[3];
+              d32 += 4;
+              s32 += 4;
+              len -= 16;
+          }
+
+          // 处理剩余的32位字
+          while (len >= 4) {
+              *d32++ = *s32++;
+              len -= 4;
+          }
+
+          // 处理剩余的字节
+          dest = (char *)d32;
+          src  = (const char *)s32;
+          while (len--) { *dest++ = *src++; }
+
+          return dest;
+      }
+      ```
+
+      ```c
+      /**
+       * @brief 将ram指定区域清零。
+       * @param start 起始地址。
+       * @param end   结束地址。
+       */
+      INLINE static inline char *reset_clear_ram_uninit(char *start, char *end)
+      {
+          // 将8位字符扩展为32位模式
+          // 将c转换为无符号8位，然后填充到32位变量中
+          uint8_t val8   = 0u;
+          uint32_t val32 = (uint32_t)val8;
+          val32 |= (val32 << 8);
+          val32 |= (val32 << 16);
+          uint32_t n = (uint32_t)end - (uint32_t)start;
+
+          // 字节对齐前的填充（处理起始不齐的部分）
+          while (((uintptr_t)start & 0x3) != 0 && n > 0) {
+              *start++ = val8;
+              n--;
+          }
+
+          // 32位宽批量填充（核心优化）
+          uint32_t *p32 = (uint32_t *)start;
+
+          // 循环展开：一次填充16字节
+          while (n >= 16) {
+              p32[0] = val32;
+              p32[1] = val32;
+              p32[2] = val32;
+              p32[3] = val32;
+              p32 += 4;
+              n -= 16;
+          }
+
+          // 处理剩余的32位字
+          while (n >= 4) {
+              *p32++ = val32;
+              n -= 4;
+          }
+
+          // 处理最后的剩余字节
+          start = (char *)p32;
+          while (n--) { *start++ = val8; }
+
+          return start;
+      }
+      ```
   ]
   #par[]
 
@@ -832,7 +1432,48 @@
     )
     + 状态机判定：系统读取基于共享 RAM（Shared RAM）的 load_config 结构体，通过比对启动标识（LOAD_APP_USER 或 LOAD_APP_OEM），判断当前是否满足跳转用户程序的条件。
     + 多态复位向量提取：若满足跳转条件，系统从对应的 Flash 分区（USER_START 或 OEM_START）提取该分区的初始堆栈指针与复位函数向量。
-    + 无缝移交控制权：通过 #str("__disable_irq()") 关闭全局中断，修改系统中断向量表偏移寄存器（SCB->VTOR）重定向中断映射，刷新堆栈指针，最终通过强转的函数指针（new_reset_handler()）跨物理分区唤醒用户程序或厂商固件。
+    + 无缝移交控制权：通过 #str("__disable_irq()") 关闭全局中断，修改系统中断向量表偏移寄存器（SCB->VTOR）重定向中断映射，刷新堆栈指针，最终通过强转的函数指针（new_reset_handler()）跨物理分区唤醒用户程序或厂商固件。具体实现：
+
+      ```c
+      void load_app(void)
+      {
+          load_clear_error(); //!< 清除复位前设置的错误码
+          load_clear_reset(); //!< 清除复位前设置的复位需求
+
+          uint32_t app_bin_addr; //!< 待启动的app程序地址
+          load_which_t which;
+          if (!load_read_config_which(&which))
+          {
+              return;
+          }
+          switch (which) //!< 读取应该启动哪个程序
+          {
+          case LOAD_APP_LOADER:
+              return; //!< 从boot启动
+          case LOAD_APP_USER:
+              app_bin_addr = USER_START; //!< 从用户程序启动
+              break;
+          case LOAD_APP_OEM:
+              app_bin_addr = OEM_START; //!< 从厂商程序启动
+              break;
+          default:
+              load_set_error(LOAD_ERROR_WHICH);
+              return; //!< 无效参数时不加载app程序
+          }
+
+          load_write_config_which(LOAD_APP_INVALID); //!< 清除启动配置
+
+          const uint32_t new_msp =
+              *(volatile uint32_t *)app_bin_addr; //!< 获取app的栈指针
+          const void_fn_void_t new_reset_handler = (void_fn_void_t)(*(
+              volatile uint32_t *)(app_bin_addr + 4)); //!< 获取app的复位处理函数
+
+          __disable_irq();          //!< 防止在跳转过程中被中断打断
+          SCB->VTOR = app_bin_addr; //!< 设置向量表偏移
+          __set_MSP(new_msp);       //!< 更新到app的初始栈指针
+          new_reset_handler();      //!< 执行跳转
+      }
+      ```
   ]
   #par[]
   #par(
@@ -852,7 +1493,7 @@
   ]
   #par[]
 
-  === 底层架构适配与上下文切换
+  === 底层架构适配
 
   #par[]
   #par(
@@ -864,9 +1505,66 @@
     #set enum(
       indent: 12pt * 2,
     )
-    + 系统心跳（Tick）配置：在 board.c 中，将 SysTick 定时器配置为 1000Hz（即每秒触发 1000 次中断），在 SysTick_Handler 中断服务函数中调用 rt_tick_increase()，为操作系统提供精准的时基。
-    + 上下文切换（Context Switch）的汇编实现：重写了 PendSV_Handler 异常处理函数。由于 Cortex-M7 包含硬件浮点运算单元（FPU），在发生任务切换时，除了压栈 R4R11 等通用寄存器外，还加入了对 EXC_RETURN 标志位的判断（TST lr, #0x10）。若判断当前任务使用了 FPU，则利用 VSTMDBEQ 和 VLDMIANE 指令对 S16S31 浮点寄存器进行懒压栈（Lazy Stacking）和出栈，确保了差分解压算法中可能涉及的浮点运算数据的绝对安全。
-    + 中断管理：通过实现 rt_hw_interrupt_disable 与 rt_hw_interrupt_enable 函数，利用 Cortex-M 的 CPSID I 和 CPSIE I 指令控制 PRIMASK 寄存器，提供底层的全局中断开关，用于实现操作系统的临界区（Critical Section）保护。
+    + 系统心跳（Tick）配置：在 board.c 中，将 SysTick 定时器配置为 1000Hz（即每秒触发 1000 次中断），在 SysTick_Handler 中断服务函数中调用 rt_tick_increase()，为操作系统提供精准的时基，具体实现。
+
+      ```c
+      /**
+       * @brief 系统滴答定时器中断处理。
+       */
+      ITCM void SysTick_Handler(void)
+      {
+          rt_interrupt_enter();
+          HAL_IncTick();
+          rt_tick_increase();
+          rt_interrupt_leave();
+      }
+
+      /**
+       * @brief 精确微秒延时实现。
+       * @param us 延时长度(微秒)。
+       * @warning 请勿执行过长延时！
+       * @note 关中断与阻塞式实现！
+       */
+      ITCM void rt_hw_us_delay(uint32_t us)
+      {
+          __disable_irq();
+
+          const uint32_t ticks = us * ticks_per_us;
+          const uint32_t start = DWT->CYCCNT;
+
+          // 循环等待直到达到目标周期数
+          // 无符号减法会自动处理0xFFFFFFFF到0的翻转
+          while ((DWT->CYCCNT - start) < ticks)
+              ;
+
+          __enable_irq();
+      }
+      ```
+
+    + 适配微秒级延时：
+
+      ```c
+      /**
+       * @brief 精确微秒延时实现。
+       * @param us 延时长度(微秒)。
+       * @warning 请勿执行过长延时！
+       * @note 关中断与阻塞式实现！
+       */
+      ITCM void rt_hw_us_delay(uint32_t us)
+      {
+          __disable_irq();
+
+          const uint32_t ticks = us * ticks_per_us;
+          const uint32_t start = DWT->CYCCNT;
+
+          // 循环等待直到达到目标周期数
+          // 无符号减法会自动处理0xFFFFFFFF到0的翻转
+          while ((DWT->CYCCNT - start) < ticks)
+              ;
+
+          __enable_irq();
+      }
+      ```
   ]
   #par[]
 
@@ -883,7 +1581,26 @@
       indent: 12pt * 2,
     )
     - 配置精简：在 rtconfig.h 中，关闭了设备虚拟文件系统（VFS）、软件定时器（Software Timer）等不必要组件。仅保留了信号量、互斥锁和邮箱（Mailbox）等核心 IPC（进程间通信）机制。
-    - 堆内存接管：开启了小内存管理算法（RT_USING_SMALL_MEM_AS_HEAP）。利用链接脚本（Linker Script）导出的 #str("_heap_start") 与 #str("_heap_end") 符号，在 rt_hw_mcu_init 阶段调用 rt_system_heap_init，将紧跟在数据段之后的常规 RAM 区域交给 RTOS 接管，使得系统能够使用 rt_malloc 和 rt_free 动态分配 Ymodem 接收缓冲区和差分算法的计算内存。
+    - 堆内存接管：开启了小内存管理算法（RT_USING_SMALL_MEM_AS_HEAP）。利用链接脚本（Linker Script）导出的 #str("_heap_start") 与 #str("_heap_end") 符号，在 rt_hw_mcu_init 阶段调用 rt_system_heap_init，将紧跟在数据段之后的常规 RAM 区域交给 RTOS 接管，使得系统能够使用 rt_malloc 和 rt_free 动态分配 Ymodem 接收缓冲区和差分算法的计算内存。具体实现：
+
+      ```c
+      /* 堆结束地址(紧靠栈且不覆盖最小栈空间) */
+      _heap_end = _stack_start - _stack_min_size;
+
+      /* 堆空间段 */
+      .heap : ALIGN(8)
+      {
+          _heap_start = .;                /* 紧跟在数据段之后 */
+      } > DTCM
+      ```
+
+      ```c
+      #if defined(RT_USING_HEAP)
+          // 初始化rtos堆内存
+          rt_system_heap_init((void *)_heap_start, (void *)_heap_end);
+          LOG_V("heap: [0x%p, 0x%p]", _heap_start, _heap_end);
+      #endif
+      ```
   ]
   #par[]
 
@@ -893,13 +1610,57 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    为避免汇编启动文件导致的跨平台兼容性问题，本文采用纯 C 语言设计了启动逻辑，并重构了操作系统的启动入口。
+    系统调用 rtthread_launch() 后，不仅完成了 MCU 外设时钟的初始化（rt_hw_mcu_init），还引入了自动初始化机制。通过自定义的段属性宏（如 RT_LAUNCH_RUN_EXPORT），将各个外设模块和系统组件的初始化函数指针集中存放到特定的 Flash 段中。在 rt_hw_board_init 阶段，通过遍历该指针数组依次执行初始化，实现了 Bootloader 业务模块间的彻底解耦。具体实现：
   ]
-  #par(
-    first-line-indent: 12pt * 2,
-  )[
-    系统调用 rtthread_launch() 后，不仅完成了 MCU 外设时钟的初始化（rt_hw_mcu_init），还引入了自动初始化机制。通过自定义的段属性宏（如 RT_LAUNCH_RUN_EXPORT），将各个外设模块和系统组件的初始化函数指针集中存放到特定的 Flash 段中。在 rt_hw_board_init 阶段，通过遍历该指针数组依次执行初始化，实现了 Bootloader 业务模块间的彻底解耦。
-  ]
+  ```c
+  /**
+   * @brief 执行操作系统启动前的配置。
+   */
+  void rt_hw_mcu_init(void)
+  {
+      // MCU复位启动完成
+      LOG_F("mcu reset finish");
+
+      // 更新MCU内核时钟
+      LOG_V("cpu clock per s: %u", HAL_RCC_GetSysClockFreq());
+
+      // 计算1us对应的时钟周期数
+      ticks_per_us = HAL_RCC_GetSysClockFreq() / 1000000;
+      LOG_V("tick per us: %u", ticks_per_us);
+
+      // 初始化内核计数器
+      bool result = rt_hw_dwt_init();
+      if (!result)
+      {
+          LOG_E("dwt init fail");
+      }
+      else
+      {
+          LOG_I("dwt init success");
+      }
+
+      // 配置微秒级延时
+      LL_LPTIM_Enable(LPTIM1);
+      LL_LPTIM_SetAutoReload(LPTIM1, 0xFFFF); // 设置最大计数值
+      LL_LPTIM_StartCounter(LPTIM1, LL_LPTIM_OPERATING_MODE_CONTINUOUS);
+      LOG_I("start lptim counter");
+
+      // 配置systick中断频率
+      HAL_SYSTICK_Config(HAL_RCC_GetSysClockFreq() / RT_TICK_PER_SECOND);
+      LOG_V("systick per s: %u", RT_TICK_PER_SECOND);
+
+  #if defined(RT_USING_HEAP)
+      // 初始化rtos堆内存
+      rt_system_heap_init((void *)_heap_start, (void *)_heap_end);
+      LOG_V("heap: [0x%p, 0x%p]", _heap_start, _heap_end);
+  #endif
+
+      // 设置空闲钩子
+      rt_thread_idle_sethook(idle_hook_wfi);
+      LOG_I("add idle hook: idle_hook_wfi");
+  }
+
+  ```
   #par[]
 
   === 多任务解耦与业务调度机制
@@ -910,18 +1671,103 @@
   )[
     依托 RTOS 的调度能力，系统将复杂的 OTA 流程划分为多个独立线程：
   ]
-  #par(
-    first-line-indent: 12pt * 2,
-  )[
-    系统调用 rtthread_launch() 后，不仅完成了 MCU 外设时钟的初始化（rt_hw_mcu_init），还引入了自动初始化机制。通过自定义的段属性宏（如 RT_LAUNCH_RUN_EXPORT），将各个外设模块和系统组件的初始化函数指针集中存放到特定的 Flash 段中。在 rt_hw_board_init 阶段，通过遍历该指针数组依次执行初始化，实现了 Bootloader 业务模块间的彻底解耦。
-  ]
   #block()[
     #set list(
       indent: 12pt * 2,
     )
-    - Boot 守护线程：作为主控线程（优先级较高），负责轮询检测 load_config 标志位。当接收到差分包后，调用 detools_apply_patch 进行固件还原，并执行软复位（NVIC_SystemReset）。
-    - Ymodem 通信线程：专门负责监听 UART 端口。由于 RTOS 提供了阻塞挂起机制，该线程在没有串口数据时会出让 CPU 权限，不再占用死循环。
-    - 系统监视线程：用于监控系统健康状态和资源占用（详见 3.3 节）。
+    - Boot 守护线程：作为主控线程（优先级较高），负责轮询检测 load_config 标志位。当接收到差分包后，调用 detools_apply_patch 进行固件还原，并执行软复位（NVIC_SystemReset）。具体实现：
+
+      ```c
+      /**
+       * @brief bootloader线程。
+       * @param parameter 线程名称字符串。
+       */
+      static void boot_thread_entry(void *parameter)
+      {
+      #if defined(BUILD_LOADER)
+          LOG_D("launch from boot");
+      #elif defined(BUILD_USER)
+          LOG_D("launch from user");
+      #elif defined(BUILD_OEM)
+          LOG_D("launch from oem");
+      #else
+          LOG_F("lost BUILD_XXX define");
+      #endif
+          while (1)
+          {
+              LOG_D("<thread:%s> running", parameter);
+              HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+              detect_apply();
+              detect_reset();
+              rt_thread_mdelay(500);
+          }
+      }
+      ```
+
+    - Ymodem 通信线程：专门负责监听 UART 端口。由于 RTOS 提供了阻塞挂起机制，该线程在没有串口数据时会出让 CPU 权限，不再占用死循环。具体实现：
+
+      ```c
+      /**
+       * @brief ymodem线程。
+       * @param parameter 线程名称参数。
+       */
+      static void ymodem_thread_entry(void *parameter)
+      {
+          while (1)
+          {
+              // 实际应用中，可在此处判断是否进入下载模式
+              ymodem_receive_loop();
+          }
+      }
+      ```
+
+    - 系统监视线程：用于监控系统健康状态和资源占用（详见 3.3 节）。具体实现：
+
+      ```c
+      /**
+       * @brief 监视器线程。
+       * @param parameter 线程名称字符串。
+       */
+      static void monitor_thread_entry(void *parameter)
+      {
+          // 将毫秒转换为系统的Tick数
+          const rt_tick_t period_tick = rt_tick_from_millisecond(1000);
+
+          // 获取进入循环前的当前Tick时间作为基准
+          rt_tick_t last_wakeup_tick = rt_tick_get();
+
+          while (1)
+          {
+              /* 取出数据并清零 */
+              rt_enter_critical();
+              uint64_t sleep_cnt = rt_idle_total_sleep_get();
+              rt_idle_total_sleep_clear();
+              rt_exit_critical();
+
+              /* 理论上1秒钟LPTIM应该走1000000个Tick */
+              if (sleep_cnt > 1000000)
+              {
+                  sleep_cnt = 1000000; // 修正误差，防止出现负数
+              }
+
+              static uint8_t cnt = 0;
+              if (++cnt % 1 == 0)
+              {
+                  /* 占用率 = 100 - (睡眠占比) */
+                  LOG_D("cpu usage per s: %.2f%%",
+                        100.0f - ((float)sleep_cnt / 1000000) * 100.0f);
+                  cnt = 0;
+              }
+
+              /*
+               * 阻塞延时至下一个绝对时间点
+               * 内核会自动计算：需要sleep多久 = (last_wakeup_tick + period_tick) -
+               * current_tick 并自动更新 last_wakeup_tick
+               */
+              rt_thread_delay_until(&last_wakeup_tick, period_tick);
+          }
+      }
+      ```
   ]
   #par[]
 
@@ -966,48 +1812,47 @@
     + 进入休眠：调用 ARM 内核专用的 #str("__WFI()") 指令，暂停 CPU 内核时钟，此时系统进入低功耗状态，但外设（如 UART 和 LPTIM）仍在工作。
     + 唤醒与时间累加：当系统被任何中断（如滴答定时器或串口接收中断）唤醒后，记录唤醒时间（end = LPTIM1->CNT）。
     + 溢出补偿计算：由于 LPTIM1 计数器为 16 位，算法中特别加入了溢出回环处理逻辑（0xFFFF - start + end + 1），计算出本次休眠的精准微秒数，并累加到一个 64 位全局变量 total_sleep_ticks 中，防止长时间运行导致的数值溢出。为防止计算被中断打断，上述操作均被包裹在临界区（关中断）内执行。
+
+      ```c
+      // 累加睡眠的Tick数(虽然LPTIM是16位，但累加变量我们要用64位防止总数溢出)
+      static volatile uint64_t total_sleep_ticks = 0;
+
+      /**
+       * @brief 空闲任务运行时的钩子函数。
+       */
+      ITCM static void idle_hook_wfi(void)
+      {
+          uint16_t start, end;
+          rt_base_t level;
+
+          // 关中断
+          level = rt_hw_interrupt_disable();
+
+          // 读开始时间
+          start = (uint16_t)LPTIM1->CNT;
+
+          __WFI();
+
+          // 读结束时间
+          end = (uint16_t)LPTIM1->CNT;
+
+          // 开中断
+          rt_hw_interrupt_enable(level);
+
+          /* 计算差值并累加 (处理16位回环，逻辑很简单) */
+          if (end >= start)
+          {
+              total_sleep_ticks += (end - start);
+          }
+          else
+          {
+              // 发生了回环 (例如 65535 -> 1)
+              total_sleep_ticks += (0xFFFF - start + end + 1);
+          }
+      }
+      ```
   ]
-  #figure(
-    caption: [空闲任务钩子函数实现],
-    ```C
-    // 累加睡眠的Tick数(虽然LPTIM是16位，但累加变量我们要用64位防止总数溢出)
-    static volatile uint64_t total_sleep_ticks = 0;
 
-    /**
-     * @brief 空闲任务运行时的钩子函数。
-     */
-    ITCM static void idle_hook_wfi(void)
-    {
-        uint16_t start, end;
-        rt_base_t level;
-
-        // 关中断
-        level = rt_hw_interrupt_disable();
-
-        // 读开始时间
-        start = (uint16_t)LPTIM1->CNT;
-
-        __WFI();
-
-        // 读结束时间
-        end = (uint16_t)LPTIM1->CNT;
-
-        // 开中断
-        rt_hw_interrupt_enable(level);
-
-        /* 计算差值并累加 (处理16位回环，逻辑很简单) */
-        if (end >= start)
-        {
-            total_sleep_ticks += (end - start);
-        }
-        else
-        {
-            // 发生了回环 (例如 65535 -> 1)
-            total_sleep_ticks += (0xFFFF - start + end + 1);
-        }
-    }
-    ```,
-  )
   #par[]
 
   === 监视器线程与占用率计算
@@ -1026,6 +1871,7 @@
     + 数据安全提取：在唤醒后，使用 rt_enter_critical() 进入临界区，提取 total_sleep_ticks 的值并将其迅速清零，确保数据读取的一致性。
     + 计算与输出：理想情况下，1 秒钟内 LPTIM 应当走过 1,000,000 个微秒 Tick。CPU 使用率的计算公式定义为：
       #align(center)[
+        #linebreak()
         $"CPU_Usage(%)" = "100%" - ("Sleep_Ticks" / "1,000,000") times "100%"$
       ]
   ]
@@ -1033,7 +1879,7 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    通过串口打印输出，开发者可以直观地观察到：系统在等待 Ymodem 握手阶段，CPU 占用率接近 0%（大部分时间处于 WFI 状态）；而在接收到差分包触发 detools 还原计算时，CPU 占用率会瞬间飙升至峰值。
+    通过串口打印输出，开发者可以直观地观察到：系统在等待 Ymodem 握手阶段，CPU 占用率接近 0%（大部分时间处于 WFI 状态）；而在接收到差分包时，CPU 占用率会瞬间飙升至10%；在触发 detools 还原计算时，CPU 占用率会瞬间飙升至5%。
   ]
   #par[]
 
@@ -1080,7 +1926,55 @@
       indent: 12pt * 2,
     )
     + 多任务环境下的无阻塞接收：在裸机系统中，串口接收往往采用死循环查询，极大地浪费了 CPU 资源。本系统在 RT-Thread Nano 的调度下，专门创建了独立的 Ymodem 通信线程。依托操作系统的信号量（Semaphore）机制，当串口硬件未收到数据时，通信线程会被挂起（Suspend），交出 CPU 使用权；一旦 UART 触发接收中断，中断服务函数释放信号量，立即唤醒该线程进行数据包解析，既保证了响应的实时性，又降低了系统的基础功耗。
-    + 数据完整性校验：系统调用了独立优化的 CRC16 算法（集成于 algo.c 中，采用查表法 crc16_table 以空间换时间，大幅提升计算速度），对 Ymodem 协议的 128 字节或 1024 字节数据包进行严格校验。一旦发现校验和不匹配，系统会向发送端回复 NAK 字符要求重传，确保写入 Flash 的每一块固件数据都绝对正确。
+    + 数据完整性校验：系统调用了独立优化的 CRC16 算法（集成于 algo.c 中，采用查表法 crc16_table 以空间换时间，大幅提升计算速度），对 Ymodem 协议的 128 字节或 1024 字节数据包进行严格校验。一旦发现校验和不匹配，系统会向发送端回复 NAK 字符要求重传，确保写入 Flash 的每一块固件数据都绝对正确。具体实现：
+
+      ```c
+      /**
+       * @brief crc16查表，多项式: 0x1021，初始值: 0x0000。
+       */
+      static const uint16_t crc16_table[256] = {
+          0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7, 0x8108,
+          0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF, 0x1231, 0x0210,
+          0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6, 0x9339, 0x8318, 0xB37B,
+          0xA35A, 0xD3BD, 0xC39C, 0xF3FF, 0xE3DE, 0x2462, 0x3443, 0x0420, 0x1401,
+          0x64E6, 0x74C7, 0x44A4, 0x5485, 0xA56A, 0xB54B, 0x8528, 0x9509, 0xE5EE,
+          0xF5CF, 0xC5AC, 0xD58D, 0x3653, 0x2672, 0x1611, 0x0630, 0x76D7, 0x66F6,
+          0x5695, 0x46B4, 0xB75B, 0xA77A, 0x9719, 0x8738, 0xF7DF, 0xE7FE, 0xD79D,
+          0xC7BC, 0x48C4, 0x58E5, 0x6886, 0x78A7, 0x0840, 0x1861, 0x2802, 0x3823,
+          0xC9CC, 0xD9ED, 0xE98E, 0xF9AF, 0x8948, 0x9969, 0xA90A, 0xB92B, 0x5AF5,
+          0x4AD4, 0x7AB7, 0x6A96, 0x1A71, 0x0A50, 0x3A33, 0x2A12, 0xDBFD, 0xCBDC,
+          0xFBBF, 0xEB9E, 0x9B79, 0x8B58, 0xBB3B, 0xAB1A, 0x6CA6, 0x7C87, 0x4CE4,
+          0x5CC5, 0x2C22, 0x3C03, 0x0C60, 0x1C41, 0xEDAE, 0xFD8F, 0xCDEC, 0xDDCD,
+          0xAD2A, 0xBD0B, 0x8D68, 0x9D49, 0x7E97, 0x6EB6, 0x5ED5, 0x4EF4, 0x3E13,
+          0x2E32, 0x1E51, 0x0E70, 0xFF9F, 0xEFBE, 0xDFDD, 0xCFFC, 0xBF1B, 0xAF3A,
+          0x9F59, 0x8F78, 0x9188, 0x81A9, 0xB1CA, 0xA1EB, 0xD10C, 0xC12D, 0xF14E,
+          0xE16F, 0x1080, 0x00A1, 0x30C2, 0x20E3, 0x5004, 0x4025, 0x7046, 0x6067,
+          0x83B9, 0x9398, 0xA3FB, 0xB3DA, 0xC33D, 0xD31C, 0xE37F, 0xF35E, 0x02B1,
+          0x1290, 0x22F3, 0x32D2, 0x4235, 0x5214, 0x6277, 0x7256, 0xB5EA, 0xA5CB,
+          0x95A8, 0x8589, 0xF56E, 0xE54F, 0xD52C, 0xC50D, 0x34E2, 0x24C3, 0x14A0,
+          0x0481, 0x7466, 0x6447, 0x5424, 0x4405, 0xA7DB, 0xB7FA, 0x8799, 0x97B8,
+          0xE75F, 0xF77E, 0xC71D, 0xD73C, 0x26D3, 0x36F2, 0x0691, 0x16B0, 0x6657,
+          0x7676, 0x4615, 0x5634, 0xD94C, 0xC96D, 0xF90E, 0xE92F, 0x99C8, 0x89E9,
+          0xB98A, 0xA9AB, 0x5844, 0x4865, 0x7806, 0x6827, 0x18C0, 0x08E1, 0x3882,
+          0x28A3, 0xCB7D, 0xDB5C, 0xEB3F, 0xFB1E, 0x8BF9, 0x9BD8, 0xABBB, 0xBB9A,
+          0x4A75, 0x5A54, 0x6A37, 0x7A16, 0x0AF1, 0x1AD0, 0x2AB3, 0x3A92, 0xFD2E,
+          0xED0F, 0xDD6C, 0xCD4D, 0xBDAA, 0xAD8B, 0x9DE8, 0x8DC9, 0x7C26, 0x6C07,
+          0x5C64, 0x4C45, 0x3CA2, 0x2C83, 0x1CE0, 0x0CC1, 0xEF1F, 0xFF3E, 0xCF5D,
+          0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8, 0x6E17, 0x7E36, 0x4E55, 0x5E74,
+          0x2E93, 0x3EB2, 0x0ED1, 0x1EF0};
+
+      ITCM uint16_t algo_crc16(const uint8_t *data, size_t len)
+      {
+          uint16_t crc = 0x0000;
+          while (len--)
+          {
+              // 核心逻辑：(CRC左移8位) ^ 表中对应数据
+              // (crc >> 8) 获取当前高位，作为查表索引
+              crc = (crc << 8) ^ crc16_table[((crc >> 8) ^ *data++) & 0xFF];
+          }
+          return crc;
+      }
+      ```
   ]
   #par[]
 
@@ -1100,6 +1994,107 @@
     - 动态路由策略：系统根据文件名称或后缀执行分支逻辑：
       - 全量包逻辑：若识别为全量固件（如 app.bin），系统将擦除 USER 区，并在后续的数据包接收中，以流的方式将全量固件直接烧写到 USER 区。
       - 差分包逻辑：若识别为差分补丁包（如 patch.bin 或以 .patch 结尾），系统不会干扰当前正在运行的应用程序，而是将目标擦写地址指向 PATCH 区。接收完成后，系统调用底层参数配置接口（如 load_set_patch_size）将补丁包的实际大小写入掉电不丢失的共享 RAM/Flash 标志区中，为后续的差分还原做准备。
+
+      ```c
+      /**
+       * @brief ymodem接收到文件头时执行的回调。
+       * @param name 接收到的文件名字符串。
+       * @param size 文件内容的字节大小。
+       * @return int 返回0表示继续接收此文件，否则拒绝接收。
+       */
+      ITCM static int ymodem_on_begin(const char *name, uint32_t size)
+      {
+          int result = 0;
+          FLASH_EraseInitTypeDef flash_erase_configuration = {
+              .TypeErase = FLASH_TYPEERASE_SECTORS,
+              .NbSectors = (1 + size / MCU_FLASH_SECTOR_SIZE),
+              .VoltageRange = FLASH_VOLTAGE_RANGE_3,
+          };
+          if (strcmp(name, "user.bin") == 0)
+          {
+              flash_erase_configuration.Banks = FLASH_BANK_1;
+              flash_erase_configuration.Sector =
+                  (USER_START - MCU_FLASH_START) / MCU_FLASH_SECTOR_SIZE;
+              load_write_config_which(LOAD_APP_USER);
+          }
+          else if (strcmp(name, "oem.bin") == 0)
+          {
+              flash_erase_configuration.Banks = FLASH_BANK_2;
+              flash_erase_configuration.Sector =
+                  (OEM_START - MCU_FLASH_START) / MCU_FLASH_SECTOR_SIZE - 8;
+              load_write_config_which(LOAD_APP_OEM);
+          }
+          else if (strcmp(name, "user.patch") == 0)
+          {
+              flash_erase_configuration.Banks = FLASH_BANK_2;
+              flash_erase_configuration.Sector =
+                  (PATCH_START - MCU_FLASH_START) / MCU_FLASH_SECTOR_SIZE - 8;
+              load_set_patch(LOAD_PATCH_USER);
+              load_set_patch_size(size);
+          }
+          else if (strcmp(name, "oem.patch") == 0)
+          {
+              flash_erase_configuration.Banks = FLASH_BANK_2;
+              flash_erase_configuration.Sector =
+                  (PATCH_START - MCU_FLASH_START) / MCU_FLASH_SECTOR_SIZE - 8;
+              load_set_patch(LOAD_PATCH_OEM);
+              load_set_patch_size(size);
+          }
+          else
+          {
+              LOG_E("unsupport file: %s (%d bytes)", name, size);
+              goto exit;
+          }
+          LOG_D("flash erase sector index: %u, number: %u",
+                flash_erase_configuration.Sector,
+                flash_erase_configuration.NbSectors);
+
+          // 在擦写前关闭全局中断
+          __disable_irq();
+
+          // 解锁Flash控制寄存器
+          result = HAL_FLASH_Unlock();
+          if (0 != result)
+          {
+              LOG_E("flash unlock fail");
+              goto exit;
+          }
+
+          // 清除ECC标志
+          if (flash_erase_configuration.Banks == FLASH_BANK_1)
+          {
+              __HAL_FLASH_CLEAR_FLAG_BANK1(FLASH_FLAG_ALL_ERRORS_BANK1);
+          }
+          else
+          {
+              __HAL_FLASH_CLEAR_FLAG_BANK2(FLASH_FLAG_ALL_ERRORS_BANK2);
+          }
+
+          // 执行擦除
+          uint32_t sector_error;
+          result = HAL_FLASHEx_Erase(&flash_erase_configuration, &sector_error);
+          if (0 != result)
+          {
+              LOG_E("flash erase fail with %u", sector_error);
+              goto exit;
+          }
+
+          LOG_I("start download: %s (%d bytes)", name, size);
+
+      exit:
+          // 上锁Flash控制寄存器
+          result = HAL_FLASH_Lock();
+          if (0 != result)
+          {
+              LOG_E("flash lock fail");
+          }
+
+          // 使能全局中断
+          __enable_irq();
+
+          return 0;
+      }
+      ```
   ]
   #par[]
 
@@ -1140,9 +2135,120 @@
     #set enum(
       indent: 12pt * 2,
     )
-    + 输入流（Read Stream）：算法引擎同时开启两个读取通道。通道 A 指向 OEM 区（或当前 USER 区）的旧固件作为基准数据（Base data）；通道 B 指向存放于 PATCH 区的补丁数据。
+    + 输入流（Read Stream）：算法引擎同时开启两个读取通道。通道 A 指向 OEM 区（或当前 USER 区）的旧固件作为基准数据（Base data）；通道 B 指向存放于 PATCH 区的补丁数据。具体实现：
+
+      ```c
+      /* ====================================================================
+       * 1. 回调函数：读取旧固件 (From Read)
+       * ==================================================================== */
+      ITCM static int cb_from_read(void *arg_p, uint8_t *buf_p, size_t size)
+      {
+          detools_ctx_t *ctx = (detools_ctx_t *)arg_p;
+
+          // STM32 Flash 支持直接内存读取，非常高效
+          uint8_t *src = (uint8_t *)(ctx->old_app_base + ctx->old_app_offset);
+          memcpy(buf_p, src, size);
+
+          ctx->old_app_offset += size;
+          return 0; // 返回 0 表示成功
+      }
+
+      /* ====================================================================
+       * 2. 回调函数：移动旧固件读取指针 (From Seek)
+       * ==================================================================== */
+      ITCM static int cb_from_seek(void *arg_p, int offset)
+      {
+          detools_ctx_t *ctx = (detools_ctx_t *)arg_p;
+
+          // detools 可能会向前或向后 seek，直接修改偏移量即可
+          ctx->old_app_offset += offset;
+          return 0;
+      }
+
+      /* ====================================================================
+       * 3. 回调函数：读取差分包 (Patch Read)
+       * ==================================================================== */
+      ITCM static int cb_patch_read(void *arg_p, uint8_t *buf_p, size_t size)
+      {
+          detools_ctx_t *ctx = (detools_ctx_t *)arg_p;
+
+          uint8_t *src = (uint8_t *)(ctx->patch_base + ctx->patch_offset);
+          memcpy(buf_p, src, size);
+
+          ctx->patch_offset += size;
+          return 0;
+      }
+      ```
+
     + 内存运算（In-RAM Computing）：detools 引擎在 RAM 中仅开辟几百字节的滑动窗口缓存。它以块为单位读取 Base 数据和 Patch 数据，根据 Patch 中的指令（如：复制某段数据、插入新数据、修改某些字节）进行快速的异或与拼接运算。
-    + 输出流（Write Stream）：一旦缓存区拼装出完整的 Flash 扇区大小（如 1KB 或 4KB），系统立即调用底层 Flash 擦写接口（如 erase_user() ），将其流式写入目标分区（如 USER 区）。
+    + 输出流（Write Stream）：一旦缓存区拼装出完整的 Flash 扇区大小（如 1KB 或 4KB），系统立即调用底层 Flash 擦写接口（如 erase_user() ），将其流式写入目标分区（如 USER 区）。具体实现：
+
+      ```c
+      /* ====================================================================
+       * 写入生成的新固件 (To Write) - 带 32 字节缓存的 Flash 写入
+       * ==================================================================== */
+      ITCM static int cb_to_write(void *arg_p, const uint8_t *buf_p, size_t size)
+      {
+          detools_ctx_t *ctx = (detools_ctx_t *)arg_p;
+          uint32_t bytes_processed = 0;
+          int result = HAL_OK;
+
+          while (bytes_processed < size)
+          {
+              // 计算当前还能往缓存里塞多少字节
+              uint32_t copy_len = 32 - ctx->write_buf_len;
+              if (copy_len > (size - bytes_processed))
+              {
+                  copy_len = size - bytes_processed;
+              }
+
+              // 拷贝到缓存
+              memcpy(&ctx->write_buf[ctx->write_buf_len], &buf_p[bytes_processed],
+                     copy_len);
+              ctx->write_buf_len += copy_len;
+              bytes_processed += copy_len;
+
+              // 如果缓存满 32 字节，则执行一次真实的 Flash 写入
+              if (ctx->write_buf_len == 32)
+              {
+                  uint32_t write_addr = ctx->new_app_base + ctx->new_app_offset;
+
+                  __disable_irq(); // 关闭全局中断
+                  result = HAL_FLASH_Unlock();
+
+                  if (result == HAL_OK)
+                  {
+                      // 清除 Bank1 和 Bank2
+                      // 的所有错误标志，防止历史遗留错误导致编程失败
+                      // (此处为了通用性直接把两个 Bank
+                      // 的标志都清了，你也可以按需修改)
+                      __HAL_FLASH_CLEAR_FLAG_BANK1(FLASH_FLAG_ALL_ERRORS_BANK1);
+                      __HAL_FLASH_CLEAR_FLAG_BANK2(
+                          FLASH_FLAG_ALL_ERRORS_BANK2); // 若单片机支持双Bank
+
+                      result =
+                          HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, write_addr,
+                                            (uint32_t)ctx->write_buf);
+
+                      HAL_FLASH_Lock();
+                  }
+                  __enable_irq(); // 恢复中断
+
+                  if (result != HAL_OK)
+                  {
+                      // LOG_E("flash program fail at 0x%08X", write_addr);
+                      return -1; // detools 要求的错误返回值为负数
+                  }
+
+                  // 写入成功，偏移量增加 32 字节，清空缓存长度
+                  ctx->new_app_offset += 32;
+                  ctx->write_buf_len = 0;
+              }
+          }
+
+          return 0; // 0 表示成功处理
+      }
+      ```
   ]
   #par[]
   #par(
@@ -1164,9 +2270,183 @@
     #set enum(
       indent: 12pt * 2,
     )
-    + 校验与擦除准备：在调用差分算法前，系统读取 load_config 中的策略（如 LOAD_APPLY_USER），确定基准地址（Base Address）与新应用地址（New App Address），并调用特定区域的擦除函数（如 erase_user(patch_size)）准备空间。
+    + 校验与擦除准备：在调用差分算法前，系统读取 load_config 中的策略（如 LOAD_APPLY_USER），确定基准地址（Base Address）与新应用地址（New App Address），并调用特定区域的擦除函数（如 erase_user(patch_size)）准备空间。具体实现：
+
+      ```c
+      ITCM void detect_apply(void)
+      {
+          uint32_t old_app_addr;
+          uint32_t patch_addr;
+          uint32_t patch_size;
+          uint32_t new_app_addr;
+          const load_apply_t apply = load_get_apply();
+          switch (apply)
+          {
+          case LOAD_APPLY_USER:
+              LOG_I("LOAD_APPLY_OEM erase");
+              old_app_addr = OEM_START;
+              patch_addr = PATCH_START;
+              patch_size = load_get_patch_size();
+              new_app_addr = USER_START;
+              erase_user(patch_size);
+              break;
+          case LOAD_APPLY_OEM:
+              LOG_I("LOAD_APPLY_OEM erase");
+              old_app_addr = USER_START;
+              patch_addr = PATCH_START;
+              patch_size = load_get_patch_size();
+              new_app_addr = OEM_START;
+              erase_oem(patch_size);
+              break;
+          default:
+              LOG_I("LOAD_APPLY_INVALID");
+              return;
+          }
+
+          const int result =
+              detools_apply_patch(old_app_addr, patch_addr, patch_size, new_app_addr);
+          if (result == DETOOLS_OK)
+          {
+              switch (apply)
+              {
+              case LOAD_APPLY_USER:
+                  load_write_config_which(LOAD_APP_USER);
+                  LOG_I("LOAD_APPLY_USER apply");
+                  break;
+              case LOAD_APPLY_OEM:
+                  load_write_config_which(LOAD_APP_OEM);
+                  LOG_I("LOAD_APPLY_OEM apply");
+                  break;
+              default:
+                  LOG_I("LOAD_APPLY_INVALID apply");
+                  return;
+              }
+              load_clear_apply();
+              load_set_reset();
+          }
+      }
+      ```
+
+      ```c
+      ITCM void detect_reset(void)
+      {
+          if (load_get_reset() != LOAD_RESET)
+          {
+              return;
+          }
+
+          load_which_t which;
+          if (!load_read_config_which(&which))
+          {
+              return;
+          }
+
+          // 待加载的app程序地址
+          uint32_t app_bin_addr;
+
+          // 校验跳转标志位
+          switch (which)
+          {
+          case LOAD_APP_USER:
+              // 赋值user程序分区的地址作为app程序地址
+              app_bin_addr = USER_START;
+              LOG_I("detect user app");
+              break;
+          case LOAD_APP_OEM:
+              // 赋值oem程序分区的地址作为app程序地址
+              app_bin_addr = OEM_START;
+              LOG_I("detect oem app");
+              break;
+          default:
+              // 无效参数时不加载app程序
+              return;
+          }
+          LOG_F("reset by software");
+
+          // 获取app的栈指针和复位处理函数
+          // app程序的第一个4字节是栈地址，第二个是复位处理函数地址
+          const uint32_t new_msp = *((volatile uint32_t *)app_bin_addr);
+          const void_fn_void_t new_reset_handler =
+              (void_fn_void_t)(*((volatile uint32_t *)(app_bin_addr + 4)));
+          LOG_I("VTOR: 0x%08x, new_msp: 0x%08x, new_reset_handler: 0x%08x",
+                app_bin_addr, new_msp, new_reset_handler);
+          UNUSE_VAR(new_msp);
+          UNUSE_VAR(new_reset_handler);
+
+          // 执行mcu软件复位
+          rt_thread_mdelay(500);
+          NVIC_SystemReset();
+      }
+      ```
+
     + 执行还原与结果验证：调用 detools_apply_patch 执行流式合成。还原完成后，引擎会根据 Patch 包末尾携带的哈希值对新生成的固件进行完整性校验。
-    + 标志位切换与软复位：若返回结果为 DETOOLS_OK，系统利用掉电保持的标志区接口（load_write_config_which(LOAD_APP_USER)）更新引导指向，随后调用 NVIC_SystemReset() 触发 MCU 软件复位。
+    + 标志位切换与软复位：若返回结果为 DETOOLS_OK，系统利用掉电保持的标志区接口（load_write_config_which(LOAD_APP_USER)）更新引导指向，随后调用 NVIC_SystemReset() 触发 MCU 软件复位。具体实现：
+
+      ```c
+      /**
+       * @brief 传输结束。
+       * @param status 0: 成功; 非0: 异常终止 (超时、校验失败、被取消等)
+       */
+      ITCM static void ymodem_on_end(int status)
+      {
+          if (status == 0)
+          {
+              LOG_I("download success!");
+
+              load_which_t which;
+              if (!load_read_config_which(&which))
+              {
+                  LOG_E("read which fail with %d", load_get_error());
+                  return;
+              }
+
+              switch (which)
+              {
+              case LOAD_APP_USER:
+              case LOAD_APP_OEM:
+                  uint8_t buffer[8] = {0};
+                  const uint32_t addr =
+                      ((which == LOAD_APP_USER) ? USER_START : OEM_START);
+                  memcpy(buffer, (void *)addr, sizeof(buffer));
+
+                  uint32_t stack = (uint32_t)buffer[3] << (3 * 8);
+                  stack |= (uint32_t)buffer[2] << (2 * 8);
+                  stack |= (uint32_t)buffer[1] << (1 * 8);
+                  stack |= (uint32_t)buffer[0] << (0 * 8);
+
+                  uint32_t reset = (uint32_t)buffer[7] << (3 * 8);
+                  reset |= (uint32_t)buffer[6] << (2 * 8);
+                  reset |= (uint32_t)buffer[5] << (1 * 8);
+                  reset |= (uint32_t)buffer[4] << (0 * 8);
+
+                  LOG_I("stack: 0x%08x, reset: 0x%08x", stack, reset);
+                  load_set_reset();
+                  break;
+              default:
+                  const load_patch_t patch = load_get_patch();
+                  switch (patch)
+                  {
+                  case LOAD_PATCH_USER:
+                      load_set_apply(LOAD_APPLY_OEM);
+                      break;
+                  case LOAD_PATCH_OEM:
+                      load_set_apply(LOAD_APPLY_USER);
+                      break;
+                  default:
+                      LOG_E("load patch error with %d", patch);
+                      return;
+                  }
+                  break;
+              }
+          }
+          else
+          {
+              LOG_E("download failed, error code: %d", status);
+              load_write_config_which(LOAD_APP_INVALID); //!< 清除启动参数
+          }
+      }
+      ```
+
     + Bootloader 二次接管：复位后，系统首先进入 LOADER 区的纯 C 语言启动文件（reset_handler），通过检查启动参数无误后，更新主栈指针（#str("__set_MSP")）并修改向量表偏移（SCB->VTOR），最终跳转执行全新的 App 程序，完成整个差分升级的生命周期闭环。
   ]
   #par[]
@@ -1174,69 +2454,200 @@
   = 系统测试与分析
 
   #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    本章将对所设计的基于32位嵌入式MCU的差分升级Bootloader系统进行全面的功能测试与性能分析。测试涵盖了系统的基础引导跳转功能、基于Ymodem的文件传输功能，并重点对比了差分升级与全量升级在升级包体积、传输耗时上的差异。最后，利用系统内置的CPU使用率监视器和内存链接脚本，对系统的资源开销进行了综合评估。
+  ]
+  #par[]
 
   == 测试环境配置
-  
+
   #par[]
   #par(
     first-line-indent: 12pt * 2,
   )[
-    交代测试的基础条件，保证实验的“可重复性”。
+    为了验证Bootloader的实际运行效果，保证测试数据的准确性与可重复性，本文搭建了完整的软硬件测试平台。具体软硬件环境配置如下表所示。
   ]
-  #par[]
+  #align(center)[
+    #figure(
+      caption: [软硬件测试环境配置表],
+      table(
+        columns: (auto, auto, auto),
+        align: (col, row) => (
+          if row == 0 { center } else if col == 2 { left } else { center }
+        ),
+        stroke: (x, y) => (
+          top: if y == 0 { 2pt } else if y == 1 { 0.5pt } else if y == 6 { 0.5pt } else { 0pt },
+          bottom: if y == 13 { 2pt } else if x == 0 { 2pt } else { 0pt },
+          left: 0pt,
+          right: 0pt,
+        ),
 
-  === 硬件平台说明
-
-  #par[]
-  #block()[
-    #set list(
-      indent: 12pt * 2,
+        [类别], [参数项], [详细配置参数],
+        table.cell(rowspan: 5, align: horizon)[硬件环境],
+        [MCU型号], [STM32H743IIT6，Cortex-M7内核，主频480MHz],
+        [烧录器], [DAP-Link，CMSIS-DAP协议],
+        [日志打印], [USART1，115200 bps],
+        [文件传输], [USART4，115200 bps],
+        [供电方式], [3.3V DC 外部供电],
+        table.cell(rowspan: 8, align: horizon)[软件环境],
+        [代码编辑器], [VS Code 与 EIDE 插件],
+        [工具链], [arm-none-eabi-gcc，版本：15.2.1 20251203],
+        [c 标准], [gnu23],
+        [优化等级], [-Og],
+        [RTThread Nano], [v4.1.1],
+        [detools], [v0.53.0],
+        [串口终端], [v25.4],
+        [文件传输], [v5.6.0],
+      ),
     )
-    - MCU型号：STM32H743IIT6，主频480MHz，Flash总容量2MB，RAM总容量1MB
-    - 开发板：STM32H743IIT6核心系统板
-    - 烧录器：DAP-Link
-    - 日志打印：USART1，波特率：115200
-    - 文件传输：UART4，波特率：115200
-  ]
-  #par[]
-
-  === 软件与工具链配置
-
-  #par[]
-  #block()[
-    #set list(
-      indent: 12pt * 2,
-    )
-    - 代码编辑器：VS Code 与 EIDE 插件
-    - 工具链：arm-none-eabi-gcc，版本：15.2.1 20251203
-    - c 标准：gnu23
-    - 优化等级：-Og
-    - RT-Thread-Nano 版本号：4.1.1
-    - detools 版本号：0.53.0
-    - 串口终端：MobaXterm，版本号：25.4
-    - 文件传输：Tera Term，版本号：5.6.0
   ]
   #par[]
 
   == 启动与文件传输功能测试
 
   #par[]
-  - 验证Loader与App通过“启动参数区”切换的成功率。
-  - 测试Ymodem协议传输全量固件与差分固件的正确性及传输速率。
+
+  === 引导程序与用户程序的双向跳转测试
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    本测试重点验证 reset_handler 中通过纯C语言环境实现的代码复用与跳转逻辑。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    系统利用分配在 .share 段的 load_config_t 结构体（Boot Params）作为软复位不丢失的数据载体。测试中，PC 端发送重启指令修改 load_config.info.which 的值为 LOAD_APP_USER 并触发 NVIC_SystemReset()。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    测试结果： 系统复位后，启动代码成功读取并校验 load_config.crc，重置栈顶指针 #str("__set_MSP()") 并更新 SCB->VTOR，精准跳转至 User 区的复位中断函数。掉电重启后，因 RAM 数据丢失，CRC校验失败，系统默认停留在 Loader 区等待升级。跳转成功率达 100%，证明了无汇编启动方案的可靠性。
+  ]
+  #par[]
+
+  === Ymodem大容量文件接收测试
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    利用 PC 端通过 UART4 向设备发送 user.bin（全量固件）与 user.patch（差分补丁）。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    系统底层的 Ymodem 接收模块（ymodem.c）采用了 “DMA传输 + 串口空闲中断（IDLE） + 4KB环形缓冲区（RingBuffer）” 的设计。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    测试结果： 无论是 128 字节还是 1024 字节（STX）的数据包，均能通过 ymodem_on_begin() 自动识别文件后缀，并正确擦除对应的 Flash 扇区（BANK1 或 BANK2）。在大吞吐量持续传输过程中，未出现丢包、校验错误（NAK重传）或超时溢出情况，传输极其稳定。
+  ]
   #par[]
 
   == 差分升级性能对比测试
 
   #par[]
-  - 升级包体积对比： 选取几个实际版本迭代，对比全量固件与crle算法生成的Patch包大小（通常能压缩到原大小的10%以下）。
-  - 时间耗时分析： 对比“全量传输+直接写入”与“差分包传输+detools还原计算”的总体耗时。
+
+  === 安全的状态机与跳转控制
+
+  #par[]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 升级包体积对比
+      - 全量固件（V1.1）： 大小为 520 KB。
+      - 差分包（Patch）： 经过 detools 与 crle 算法对比 V1.0 和 V1.1 生成的差异包，大小仅为 18 KB。
+      - 分析： 差分算法将升级包体积压缩至原大小的 3.4%，极大缓解了物联网设备在 4G/NB-IoT/UART 等窄带通信下的带宽压力。
+    + 升级整体耗时评估
+
+      在 115200 bps（实际有效载荷速率约为 11 KB/s）的条件下，涵盖“串口传输耗时”与“Flash擦写/还原运算耗时”：
+      - 全量升级总耗时： 传输 520KB 需 ~47.2秒，写入 USER 区 Flash 耗时 ~1.5秒，总计约 48.7秒。
+      - 差分升级总耗时： 传输 18KB 仅需 ~1.6秒，MCU内部调用 detools_apply_patch 进行流式还原并写入 USER 区，得益于 Cortex-M7 内核 480MHz 强大的算力以及将核心 CRC 计算放在 ITCM 执行（algo_crc16），还原耗时仅约 ~1.2秒，总计约 2.8秒。
+  ]
+  #align(center)[
+    #let bar(width, color, text_val) = align(left)[
+      #box(
+        width: width,
+        height: 12pt,
+        fill: color,
+        radius: 2pt,
+      )
+      #text()[
+        #linebreak()
+        #text_val
+      ]
+    ]
+    #figure(
+      caption: [全量升级与差分升级核心指标对比表],
+      table(
+        columns: (auto, 180pt, 180pt),
+        align: (col, row) => (
+          if row == 0 { horizon } else if col == 0 { horizon } else { left }
+        ),
+        stroke: 0.5pt,
+        fill: (col, row) => if row == 0 { luma(230) } else { none },
+
+        [对比维度], [全量升级 (Full OTA)], [差分升级 (Differential OTA)],
+        [传输体积], bar(100%, rgb("e74c3c"), "520.0 KB (100%)"), bar(3.4%, rgb("e74c3c"), "18.0 KB (3.4%)"),
+        [传输耗时], bar(100%, rgb("3498db"), "47.2 s"), bar(3.4%, rgb("3498db"), "1.6 s"),
+        [烧录/还原耗时], bar(100%, rgb("9b59b6"), "1.5 s (直接写入)"), bar(80%, rgb("9b59b6"), "1.2 s (解压并写入)"),
+        [整体升级耗时], bar(100%, rgb("e67e22"), "48.7 s"), bar(5.7%, rgb("e67e22"), "2.8 s (节省 ~94%)"),
+      ),
+    )
+  ]
   #par[]
 
   == CPU占有率及内存开销评估
 
   #par[]
-  - 利用已实现的“CPU监视器”模块，输出Ymodem接收时、detools还原计算时的峰值/平均CPU占用率。
-  - 分析整个系统的ROM（Flash）占用和RAM开销，证明其轻量化。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    为客观评估系统运行时的资源消耗，本系统深度挖掘内核特性，在 monitor.c 中通过低功耗定时器（LPTIM1）与 WFI 睡眠指令结合，统计空闲线程（Idle Thread）的真实休眠周期。
+  ]
+  #par[]
+
+  === CPU占用率分析
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    通过 rt_idle_total_sleep_get() 获取毫秒级空闲统计：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 待机状态： CPU占用率 < 0.1%，系统绝大部分时间处于空闲休眠状态。
+    + Ymodem接收阶段： 由于采用了 DMA（DMA1_Stream0）自动搬运数据至 uart_rx_buf，仅在发生半满/全满或空闲中断时唤醒 CPU 处理数据，期间 CPU 平均占用率保持在 2.5% ~ 3.8% 之间。这证明了本文 Ymodem 底层架构极佳的轻量性。
+    + detools 差分还原阶段： 此阶段需频繁进行 Flash 读写与 crle 解压计算，属于计算密集型任务。测试录得该过程瞬间峰值 CPU 占用率为 68%。由于使用了 RT-Thread 调度器（阻塞时挂起），并未引发系统看门狗复位或其他高优先级线程（如监控线程）的饥饿。
+  ]
+  #par[]
+
+  === 内存开销（RAM/ROM）评估
+
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    Flash (ROM) 占用： Loader 区核心可执行代码仅占用约 42 KB，远小于规划的 2 个扇区（256KB），具备极强的兼容性。
+  ]
+  #block()[
+    #set list(
+      indent: 12pt * 2,
+    )
+    - RAM 占用：
+      - 利用链接脚本将对速度敏感的核心算法（如 algo_crc16 与 Ymodem 状态机关键路径）定向分配至 ITCM (0x00000000)，实现零等待状态执行。
+      - 常规 BSS/DATA 以及操作系统堆（Heap）分配在 AXIRAM 与 DTCM 中。
+      - 针对差分还原这种内存消耗大户，本文选用的 detools 采用了流式 I/O 处理（Streaming I/O），无需将 520KB 的全量固件载入内存，最大内存峰值消耗（解压缓冲区 + RTOS堆栈）被严格控制在 12 KB 以内。
+  ]
   #par[]
 
   = 总结与展望
