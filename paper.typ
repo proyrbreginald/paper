@@ -174,6 +174,14 @@
  * 正文
  */
 #page[
+  #align(center)[
+    #par[
+      #text(font: "Microsoft YaHei", size: 16pt, weight: "bold")[#title]
+    ]
+    #par[]
+    #par[电子与信息工程（微电子科学与工程）——杨荣宝]
+    #par[学号：2022280136]
+  ]
   #heading(level: 1, numbering: none)[摘要]
   #par[]
   #par(
@@ -676,7 +684,7 @@
     )
     - 物理存储分区映射：系统通过 partition.h 实现了 Flash 的四等分布局（LOADER区、USER区、PATCH区、OEM区），严格定义了各区间的地址（如 MCU_FLASH_START 为 0x08000000）与扇区容量，隔离了核心代码与下载数据的存储空间。具体实现：
 
-      ```C
+      ```c
       #ifndef _PARTITION_H_
       #define _PARTITION_H_
 
@@ -1811,7 +1819,7 @@
     + 记录入睡时间：在执行休眠指令前，读取当前 LPTIM1 的计数寄存器值（start = LPTIM1->CNT）。
     + 进入休眠：调用 ARM 内核专用的 #str("__WFI()") 指令，暂停 CPU 内核时钟，此时系统进入低功耗状态，但外设（如 UART 和 LPTIM）仍在工作。
     + 唤醒与时间累加：当系统被任何中断（如滴答定时器或串口接收中断）唤醒后，记录唤醒时间（end = LPTIM1->CNT）。
-    + 溢出补偿计算：由于 LPTIM1 计数器为 16 位，算法中特别加入了溢出回环处理逻辑（0xFFFF - start + end + 1），计算出本次休眠的精准微秒数，并累加到一个 64 位全局变量 total_sleep_ticks 中，防止长时间运行导致的数值溢出。为防止计算被中断打断，上述操作均被包裹在临界区（关中断）内执行。
+    + 溢出补偿计算：由于 LPTIM1 计数器为 16 位，算法中特别加入了溢出回环处理逻辑（0xFFFF - start + end + 1），计算出本次休眠的精准微秒数，并累加到一个 64 位全局变量 total_sleep_ticks 中，防止长时间运行导致的数值溢出。为防止计算被中断打断，上述操作均被包裹在临界区（关中断）内执行。具体实现：
 
       ```c
       // 累加睡眠的Tick数(虽然LPTIM是16位，但累加变量我们要用64位防止总数溢出)
@@ -1993,7 +2001,7 @@
     - 文件元数据提取：当 Ymodem 建立连接并接收到 Packet 0 时，解析引擎会提取其中的字符串信息（包含文件名和文件字节大小）。
     - 动态路由策略：系统根据文件名称或后缀执行分支逻辑：
       - 全量包逻辑：若识别为全量固件（如 app.bin），系统将擦除 USER 区，并在后续的数据包接收中，以流的方式将全量固件直接烧写到 USER 区。
-      - 差分包逻辑：若识别为差分补丁包（如 patch.bin 或以 .patch 结尾），系统不会干扰当前正在运行的应用程序，而是将目标擦写地址指向 PATCH 区。接收完成后，系统调用底层参数配置接口（如 load_set_patch_size）将补丁包的实际大小写入掉电不丢失的共享 RAM/Flash 标志区中，为后续的差分还原做准备。
+      - 差分包逻辑：若识别为差分补丁包（如 patch.bin 或以 .patch 结尾），系统不会干扰当前正在运行的应用程序，而是将目标擦写地址指向 PATCH 区。接收完成后，系统调用底层参数配置接口（如 load_set_patch_size）将补丁包的实际大小写入掉电不丢失的共享 RAM/Flash 标志区中，为后续的差分还原做准备。具体实现：
 
       ```c
       /**
@@ -2486,7 +2494,7 @@
 
         [类别], [参数项], [详细配置参数],
         table.cell(rowspan: 5, align: horizon)[硬件环境],
-        [MCU型号], [STM32H743IIT6，Cortex-M7内核，主频480MHz],
+        [MCU型号], [STM32H743IIT6，主频480MHz],
         [烧录器], [DAP-Link，CMSIS-DAP协议],
         [日志打印], [USART1，115200 bps],
         [文件传输], [USART4，115200 bps],
@@ -2496,7 +2504,7 @@
         [工具链], [arm-none-eabi-gcc，版本：15.2.1 20251203],
         [c 标准], [gnu23],
         [优化等级], [-Og],
-        [RTThread Nano], [v4.1.1],
+        [RT-Thread Nano], [v4.1.1],
         [detools], [v0.53.0],
         [串口终端], [v25.4],
         [文件传输], [v5.6.0],
@@ -2520,12 +2528,12 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    系统利用分配在 .share 段的 load_config_t 结构体（Boot Params）作为软复位不丢失的数据载体。测试中，PC 端发送重启指令修改 load_config.info.which 的值为 LOAD_APP_USER 并触发 NVIC_SystemReset()。
+    系统利用分配在 .share 段的 load_config_t 结构体（Boot Params）作为软复位不丢失的数据载体。测试中，通过在 PC 端发送新固件来触发应用切换。
   ]
   #par(
     first-line-indent: 12pt * 2,
   )[
-    测试结果： 系统复位后，启动代码成功读取并校验 load_config.crc，重置栈顶指针 #str("__set_MSP()") 并更新 SCB->VTOR，精准跳转至 User 区的复位中断函数。掉电重启后，因 RAM 数据丢失，CRC校验失败，系统默认停留在 Loader 区等待升级。跳转成功率达 100%，证明了无汇编启动方案的可靠性。
+    100次测试结果：系统复位后，启动代码成功读取并校验 load_config.crc，重置栈顶指针 #str("__set_MSP()") 并更新 SCB->VTOR，精准跳转至 User 区的复位中断函数。掉电重启后，因 RAM 数据丢失，CRC校验失败，系统默认停留在 Loader 区等待升级。跳转成功率达 100%，证明了无汇编启动方案的可靠性。
   ]
   #par[]
 
@@ -2545,7 +2553,7 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    测试结果： 无论是 128 字节还是 1024 字节（STX）的数据包，均能通过 ymodem_on_begin() 自动识别文件后缀，并正确擦除对应的 Flash 扇区（BANK1 或 BANK2）。在大吞吐量持续传输过程中，未出现丢包、校验错误（NAK重传）或超时溢出情况，传输极其稳定。
+    测试结果：无论是 128 字节还是 1024 字节（STX）的数据包，均能通过 ymodem_on_begin() 自动识别文件后缀，并正确擦除对应的 Flash 扇区（BANK1 或 BANK2）。在大吞吐量持续传输过程中，未出现丢包、校验错误（NAK重传）或超时溢出情况，传输极其稳定。
   ]
   #par[]
 
@@ -2561,14 +2569,14 @@
       indent: 12pt * 2,
     )
     + 升级包体积对比
-      - 全量固件（V1.1）： 大小为 520 KB。
-      - 差分包（Patch）： 经过 detools 与 crle 算法对比 V1.0 和 V1.1 生成的差异包，大小仅为 18 KB。
-      - 分析： 差分算法将升级包体积压缩至原大小的 3.4%，极大缓解了物联网设备在 4G/NB-IoT/UART 等窄带通信下的带宽压力。
+      - 全量固件：user.bin 大小为 42KB，oem.bin 大小为 44KB。
+      - 差分包：经过 detools 与 crle 算法对比生成的差异包，大小仅为 5KB。
+      - 分析：差分算法将升级包体积压缩至原大小的大约 22.3%（会因为固件差异而不同），极大缓解了物联网设备在 4G/NB-IoT/UART 等窄带通信下的带宽压力。
     + 升级整体耗时评估
 
-      在 115200 bps（实际有效载荷速率约为 11 KB/s）的条件下，涵盖“串口传输耗时”与“Flash擦写/还原运算耗时”：
-      - 全量升级总耗时： 传输 520KB 需 ~47.2秒，写入 USER 区 Flash 耗时 ~1.5秒，总计约 48.7秒。
-      - 差分升级总耗时： 传输 18KB 仅需 ~1.6秒，MCU内部调用 detools_apply_patch 进行流式还原并写入 USER 区，得益于 Cortex-M7 内核 480MHz 强大的算力以及将核心 CRC 计算放在 ITCM 执行（algo_crc16），还原耗时仅约 ~1.2秒，总计约 2.8秒。
+      在 115200 bps（实际有效载荷速率约为 9KB/s）的条件下，涵盖“串口传输耗时”与“Flash擦写/还原运算耗时”：
+      - 全量升级总耗时： 传输并写入 44KB 需总计约5秒，因为全量升级是每接收一个包就进行擦除写入，所以无法分开进行统计。
+      - 差分升级总耗时： 传输 5KB 仅需约0.5秒，MCU内部调用 detools_apply_patch 进行流式还原并写入 USER 区，得益于 Cortex-M7 内核 480MHz 强大的算力以及将核心 CRC 计算放在 ITCM 执行（algo_crc16），总计约1秒。
   ]
   #align(center)[
     #let bar(width, color, text_val) = align(left)[
@@ -2594,10 +2602,8 @@
         fill: (col, row) => if row == 0 { luma(230) } else { none },
 
         [对比维度], [全量升级 (Full OTA)], [差分升级 (Differential OTA)],
-        [传输体积], bar(100%, rgb("e74c3c"), "520.0 KB (100%)"), bar(3.4%, rgb("e74c3c"), "18.0 KB (3.4%)"),
-        [传输耗时], bar(100%, rgb("3498db"), "47.2 s"), bar(3.4%, rgb("3498db"), "1.6 s"),
-        [烧录/还原耗时], bar(100%, rgb("9b59b6"), "1.5 s (直接写入)"), bar(80%, rgb("9b59b6"), "1.2 s (解压并写入)"),
-        [整体升级耗时], bar(100%, rgb("e67e22"), "48.7 s"), bar(5.7%, rgb("e67e22"), "2.8 s (节省 ~94%)"),
+        [传输体积], bar(100%, rgb("e74c3c"), "44KB (100%)"), bar(22.3%, rgb("e74c3c"), "5KB (约22.3%)"),
+        [整体升级耗时], bar(100%, rgb("3498db"), "5s (100%)"), bar(20%, rgb("3498db"), "1s (约20%)"),
       ),
     )
   ]
@@ -2625,9 +2631,9 @@
     #set enum(
       indent: 12pt * 2,
     )
-    + 待机状态： CPU占用率 < 0.1%，系统绝大部分时间处于空闲休眠状态。
-    + Ymodem接收阶段： 由于采用了 DMA（DMA1_Stream0）自动搬运数据至 uart_rx_buf，仅在发生半满/全满或空闲中断时唤醒 CPU 处理数据，期间 CPU 平均占用率保持在 2.5% ~ 3.8% 之间。这证明了本文 Ymodem 底层架构极佳的轻量性。
-    + detools 差分还原阶段： 此阶段需频繁进行 Flash 读写与 crle 解压计算，属于计算密集型任务。测试录得该过程瞬间峰值 CPU 占用率为 68%。由于使用了 RT-Thread 调度器（阻塞时挂起），并未引发系统看门狗复位或其他高优先级线程（如监控线程）的饥饿。
+    + 待机状态： CPU占用率 < 3%，系统绝大部分时间处于空闲休眠状态。
+    + Ymodem接收阶段： 由于采用了 DMA（DMA1_Stream0）自动搬运数据至 uart_rx_buf，仅在发生半满/全满或空闲中断时唤醒 CPU 处理数据，期间 CPU 平均占用率保持在 8% \~ 12% 之间。这证明了本文 Ymodem 底层架构极佳的轻量性。
+    + detools 差分还原阶段： 此阶段需频繁进行 Flash 读写与 crle 解压计算，属于计算密集型任务。测试录得该过程瞬间峰值 CPU 占用率为 10%。由于使用了 RT-Thread 调度器（阻塞时挂起），并未引发系统看门狗复位或其他高优先级线程（如监控线程）的饥饿。
   ]
   #par[]
 
@@ -2646,28 +2652,65 @@
     - RAM 占用：
       - 利用链接脚本将对速度敏感的核心算法（如 algo_crc16 与 Ymodem 状态机关键路径）定向分配至 ITCM (0x00000000)，实现零等待状态执行。
       - 常规 BSS/DATA 以及操作系统堆（Heap）分配在 AXIRAM 与 DTCM 中。
-      - 针对差分还原这种内存消耗大户，本文选用的 detools 采用了流式 I/O 处理（Streaming I/O），无需将 520KB 的全量固件载入内存，最大内存峰值消耗（解压缓冲区 + RTOS堆栈）被严格控制在 12 KB 以内。
+      - 针对差分还原这种内存消耗大户，本文选用的 detools 采用了流式 I/O 处理（Streaming I/O），无需将 520KB 的全量固件载入内存，最大内存峰值消耗（解压缓冲区 + RTOS堆栈）被严格控制在 12KB 以内。
   ]
   #par[]
 
   = 总结与展望
 
   #par[]
-  #par[]
 
   == 全文总结
 
   #par[]
-  - 回顾项目完成的6项核心技术指标。
-  - 强调项目在节省传输带宽、提升Flash寿命、提高代码复用率方面的实际工程价值。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    本文围绕工业机器人及资源受限嵌入式设备对高效、可靠固件升级的迫切需求，设计并实现了一款基于32位嵌入式MCU的差分升级Bootloader系统。系统在传统全量升级的基础上，深度集成了detools轻量级差分还原算法与Ymodem文件传输协议，结合RT-Thread Nano实时操作系统，构建了一套具备高可靠性、低带宽占用和强可移植性的固件更新架构。全文工作总结如下：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 存储空间精细化管理：重新划分Flash为LOADER、USER、PATCH、OEM四个分区，实现了升级过程的物理隔离与故障回退能力。RAM侧引入ITCM/DTCM加速机制与“启动参数区（Shared RAM）”，实现了Bootloader与App之间的零损耗状态传递。
+    + 纯C语言底层启动机制重构：摒弃传统汇编启动文件，完全用C语言实现reset_handler、RAM初始化（.data搬运、.bss清零）及多分区内存映射。该设计显著提升了代码的跨平台复用性与工程可维护性。
+    + RTOS集成与多任务调度：成功移植RT-Thread Nano，将Ymodem接收、差分还原、系统监控等功能解耦为独立线程，解决了裸机架构下的阻塞问题。同时利用空闲钩子与低功耗定时器实现了精确的CPU占用率监控。
+    + Ymodem协议智能传输：实现了基于文件名的全量/差分固件自动识别与路由，支持大文件流式写入Flash，传输过程稳定可靠。
+    + 轻量级差分升级引擎：移植并优化detools差分还原算法，采用流式I/O设计，在仅消耗约12KB RAM的情况下即可完成固件合成，将升级包体积压缩至全量固件的约22.3%，整体升级时间缩短约80%。
+    + 系统测试验证：在实际硬件平台上完成了启动跳转、Ymodem传输、差分还原、CPU占用率及内存开销等全面测试。结果表明，系统运行稳定，差分升级功能显著降低了带宽与Flash擦写损耗，具备良好的工程实用价值。
+  ]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    综上，本文所设计的Bootloader系统在保证高可靠性的前提下，实现了固件升级的“轻量化”与“高效化”，为32位嵌入式设备提供了一套高内聚、低耦合的OTA升级参考方案。
+  ]
   #par[]
 
   == 后续工作展望
 
   #par[]
-  - 安全性扩展： 增加固件的签名校验（如ECDSA或RSA）与数据解密（AES），防止固件被恶意篡改。
-  - 防掉电恢复/双区回滚： 引入更完善的双区乒乓升级（A/B Slot）机制，防止升级中途断电导致系统变砖。
-  - 传输链路扩展： 未来可扩展除UART外的OTA方式，如基于以太网、Wi-Fi、BLE等通信接口的升级。
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    尽管本文系统已在功能与性能上取得了预期成果，但受限于研究周期与硬件资源，仍存在若干可进一步优化与扩展的方向：
+  ]
+  #block()[
+    #set enum(
+      indent: 12pt * 2,
+    )
+    + 安全机制增强：当前系统未对固件进行签名校验与加密。后续可引入ECDSA或RSA签名验证机制，防止恶意固件注入；同时可增加AES等加密传输通道，提升升级过程的安全性。
+    + 防掉电与双区回滚机制：虽然现有OEM区可作为备份，但升级过程中若发生断电，仍可能破坏USER区。后续可设计完整的A/B双区乒乓升级策略，结合断电检测与恢复流程，实现真正的零风险升级。
+    + 多通信链路扩展：当前仅支持UART接口与Ymodem协议。未来可适配以太网、Wi-Fi、BLE、CAN等工业总线或无线接口，拓展系统的适用场景，使其更贴合工业物联网（IIoT）设备的实际需求。
+    + 差分算法进一步优化：可探索更高效的差分压缩算法（如RDIFF、Zstandard等），或结合硬件加速单元（如CRC、DMA、加解密模块）进一步降低还原阶段的计算与功耗开销。
+    + 远程管理与诊断能力：在Bootloader中集成简单的远程日志上报、版本查询、批量升级等管理功能，形成完整的设备运维闭环。
+  ]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    通过以上扩展，本文系统有望进一步演进为一个面向工业机器人与智能装备的通用、安全、智能的固件管理平台。
+  ]
   #par[]
 
 ]
@@ -2687,6 +2730,65 @@
 #page[
   #align(center)[
     #heading(level: 1, numbering: none)[致谢]
-    #par[]
   ]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    时光荏苒，四年的大学生活即将画上句号。回首这段求学之路，有迷茫也有收获，有困惑也有成长。在本论文即将完成之际，我谨向所有在学习和生活中给予我帮助与支持的人表示最诚挚的感谢。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    首先，我要衷心感谢我的指导老师刘春平教授。从选题、方案设计到论文的撰写与修改，刘老师始终给予我细致耐心的指导。刘老师严谨的治学态度、深厚的学术造诣和敏锐的工程洞察力，让我在嵌入式系统设计与固件开发方面获益匪浅。每当我在技术难题上陷入瓶颈时，刘老师总能一针见血地指出关键，并鼓励我大胆尝试、勇于创新。本论文的顺利完成，离不开刘老师的悉心教诲与无私帮助。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    感谢深圳大学电子与信息工程学院及微电子科学与工程专业的所有授课老师。正是你们多年来的辛勤耕耘与言传身教，为我打下了扎实的专业基础，培养了我独立思考和解决实际工程问题的能力。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    感谢我的室友和朋友们，感谢你们在生活上的陪伴与包容，让我在紧张的学习之余感受到温暖与欢乐。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    特别感谢我的家人。你们始终是我最坚强的后盾，无论我遇到什么困难，你们总是无条件地支持我、相信我。你们的辛勤付出与默默守护，是我不断前行的最大动力。
+  ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    最后，感谢那个在无数个深夜坚持调试代码、从未轻言放弃的自己。毕业不是终点，而是新征程的起点。未来，我将带着在深圳大学收获的知识与信念，继续在嵌入式与物联网领域深耕探索，努力成为一名对社会有用的工程技术人员。
+  ]
+  #par[]
+]
+
+/**
+ * 英文摘要与关键词
+ */
+#page[
+  #align(center)[
+    #par[
+      #text(font: "Microsoft YaHei", size: 16pt, weight: "bold")[Architecture Design of Reliable Firmware Update for Embedded Systems in Industrial Robots]
+    ]
+  ]
+  #heading(level: 1, numbering: none)[Abstract]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    A brief overview of the urgent demand for over-the-air (OTA) firmware updates in IoT and embedded devices is presented. To address issues in traditional full firmware updates—such as prolonged transmission time and excessive flash memory write/erase wear—this paper designs and implements a Bootloader system based on a 32-bit embedded microcontroller. The system not only supports standard full firmware updates via UART but also deeply integrates the detools delta reconstruction algorithm to enable efficient differential updates. By re-partitioning the Flash and RAM memory mapping and rewriting the startup file and reset logic entirely in standard C, seamless switching and code reuse between the Loader and the Application are achieved. Furthermore, the RT-Thread Nano real-time operating system and the Ymodem protocol are incorporated to enhance task scheduling capability and file transfer reliability. Finally, CPU utilization monitoring is implemented by leveraging kernel features. Test results demonstrate that the Bootloader operates stably and that the differential update functionality significantly reduces both the update package size and transmission time.
+  ]
+  #par[]
+
+  #heading(level: 1, numbering: none)[Key words]
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    Bootloader; Differential Update; Firmware Upgrade; Real-Time Operating System (RTOS)
+  ]
+  #par[]
 ]
