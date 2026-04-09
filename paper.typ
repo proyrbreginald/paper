@@ -2492,7 +2492,7 @@
     为了验证Bootloader的实际运行效果，保证测试数据的准确性与可重复性，本文搭建了完整的软硬件测试平台。实验环境如 @image:environment 所示：
   ]
   #figure(
-    image("assets/environment.png", width: 90%),
+    image("assets/environment.png", width: 100%),
     caption: [实验环境],
   ) <image:environment>
   #par[]
@@ -2535,6 +2535,24 @@
       ),
     ) <table:environment>
   ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    项目在VS Code上通过EIDE与GCC构建编译的结果如 @image:vscode_build 所示：
+  ]
+  #figure(
+    image("assets/vscode_build.png", width: 100%),
+    caption: [VS Code 构建编译结果],
+  ) <image:vscode_build>
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    项目在VS Code上通过OpenOCD与DapLink烧录到目标MCU的结果如 @image:vscode_flash 所示：
+  ]
+  #figure(
+    image("assets/vscode_flash.png", width: 100%),
+    caption: [VS Code 烧录结果],
+  ) <image:vscode_flash>
   #par[]
 
   == 启动与文件传输功能测试
@@ -2559,6 +2577,51 @@
   )[
     100次测试结果：系统复位后，启动代码成功读取并校验 load_config.crc，重置栈顶指针 #str("__set_MSP()") 并更新 SCB->VTOR，精准跳转至 User 区的复位中断函数。掉电重启后，因 RAM 数据丢失，CRC校验失败，系统默认停留在 Loader 区等待升级。@BLJS202406014 跳转成功率达 100%，证明了无汇编启动方案的可靠性。@DZKK202308003
   ]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    首次给MCU烧录Bootloader固件后复位日志如 @image:mcu_reset 所示：
+  ]
+  #figure(
+    image("assets/mcu_reset.png", width: 100%),
+    caption: [烧录Bootloader固件后复位日志],
+  ) <image:mcu_reset>
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    首次接收user.bin文件如 @image:mcu_start_receive_user_bin 所示：
+  ]
+  #figure(
+    image("assets/mcu_start_receive_user_bin.png", width: 100%),
+    caption: [接收user.bin文件日志],
+  ) <image:mcu_start_receive_user_bin>
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    完成user.bin文件接收如 @image:mcu_finish_receive_user_bin 所示，完成新固件接收后执行复位操作，从USER启动：
+  ]
+  #figure(
+    image("assets/mcu_finish_receive_user_bin.png", width: 100%),
+    caption: [新user.bin固件接收后执行复位操作日志],
+  ) <image:mcu_finish_receive_user_bin>
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    完成oem.bin文件接收如 @image:mcu_start_receive_oem_bin 所示：
+  ]
+  #figure(
+    image("assets/mcu_start_receive_oem_bin.png", width: 100%),
+    caption: [完成oem.bin文件接收日志],
+  ) <image:mcu_start_receive_oem_bin>
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    完成oem.bin文件接收如 @image:mcu_finish_receive_oem_bin 所示，完成新固件接收后执行复位操作，从OEM启动：
+  ]
+  #figure(
+    image("assets/mcu_finish_receive_oem_bin.png", width: 100%),
+    caption: [新oem.bin固件接收后执行复位操作日志],
+  ) <image:mcu_finish_receive_oem_bin>
   #par[]
 
   === Ymodem大容量文件接收测试
@@ -2596,8 +2659,11 @@
       - 全量固件：user.bin 大小为 42KB，oem.bin 大小为 44KB。
       - 差分包：经过 detools 与 crle 算法对比生成的差异包，大小仅为 5KB。
       - 分析：差分算法将升级包体积压缩至原大小的大约 22.3%（会因为固件差异而不同），极大缓解了物联网设备在 4G/NB-IoT/UART 等窄带通信下的带宽压力。
-    + 升级整体耗时评估
-
+    + 升级整体耗时评估如 @image:ymodem_speed 所示：
+      #figure(
+        image("assets/ymodem_speed.png", width: 50%),
+        caption: [ymodem协议传输文件速度],
+      ) <image:ymodem_speed>
       在 115200 bps（实际有效载荷速率约为 9KB/s）的条件下，涵盖“串口传输耗时”与“Flash擦写/还原运算耗时”：
       - 全量升级总耗时： 传输并写入 44KB 需总计约5秒，因为全量升级是每接收一个包就进行擦除写入，所以无法分开进行统计。
       - 差分升级总耗时： 传输 5KB 仅需约0.5秒，MCU内部调用 detools_apply_patch 进行流式还原并写入 USER 区，得益于 Cortex-M7 内核 480MHz 强大的算力以及将核心 CRC 计算放在 ITCM 执行（algo_crc16），总计约1秒。
