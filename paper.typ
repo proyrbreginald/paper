@@ -131,7 +131,9 @@
 
   #align(right + bottom)[
     #text(font: "SimSun", size: 14pt)[
-      #par[毕业论文（设计）作者签名：#underline[#str("   ")杨荣宝#str("   ")]]
+      #par[
+        毕业论文（设计）作者签名：#box(image("assets/signature.png", width: 15%), baseline: 16pt)
+      ]
       #par[]
       #par[]
       #par[#today.display("[year]年[month]月[day]日")]
