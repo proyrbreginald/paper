@@ -2811,7 +2811,7 @@
 #page[
   #heading(level: 1, numbering: none)[参考文献]
   #par[]
-  #bibliography("assets/refs.bib", style: "ieee", title: none)
+  #bibliography("assets/refs.bib", style: "assets/gb-t-7714-2015-numeric.csl", title: none)
 ]
 
 /**
