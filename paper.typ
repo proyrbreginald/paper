@@ -2583,7 +2583,7 @@
     首次给MCU烧录Bootloader固件后复位日志如 @image:mcu_reset 所示：
   ]
   #figure(
-    image("assets/mcu_reset.png", width: 100%),
+    image("assets/mcu_reset.png", width: 55%),
     caption: [烧录Bootloader固件后复位日志],
   ) <image:mcu_reset>
   #par(
@@ -2592,7 +2592,7 @@
     首次接收user.bin文件如 @image:mcu_start_receive_user_bin 所示：
   ]
   #figure(
-    image("assets/mcu_start_receive_user_bin.png", width: 100%),
+    image("assets/mcu_start_receive_user_bin.png", width: 70%),
     caption: [接收user.bin文件日志],
   ) <image:mcu_start_receive_user_bin>
   #par(
@@ -2601,7 +2601,7 @@
     完成user.bin文件接收如 @image:mcu_finish_receive_user_bin 所示，完成新固件接收后执行复位操作，从USER启动：
   ]
   #figure(
-    image("assets/mcu_finish_receive_user_bin.png", width: 100%),
+    image("assets/mcu_finish_receive_user_bin.png", width: 85%),
     caption: [新user.bin固件接收后执行复位操作日志],
   ) <image:mcu_finish_receive_user_bin>
   #par(
@@ -2610,7 +2610,7 @@
     完成oem.bin文件接收如 @image:mcu_start_receive_oem_bin 所示：
   ]
   #figure(
-    image("assets/mcu_start_receive_oem_bin.png", width: 100%),
+    image("assets/mcu_start_receive_oem_bin.png", width: 70%),
     caption: [完成oem.bin文件接收日志],
   ) <image:mcu_start_receive_oem_bin>
   #par(
@@ -2619,7 +2619,7 @@
     完成oem.bin文件接收如 @image:mcu_finish_receive_oem_bin 所示，完成新固件接收后执行复位操作，从OEM启动：
   ]
   #figure(
-    image("assets/mcu_finish_receive_oem_bin.png", width: 100%),
+    image("assets/mcu_finish_receive_oem_bin.png", width: 90%),
     caption: [新oem.bin固件接收后执行复位操作日志],
   ) <image:mcu_finish_receive_oem_bin>
   #par[]
