@@ -54,6 +54,12 @@
 ))
 
 /**
+ * 设置图表标题的类型
+ */
+#set figure(supplement: [图])
+#show figure.where(kind: table): set figure(supplement: [表])
+
+/**
  * 论文封面
  */
 #page(numbering: none, header: none)[
@@ -222,7 +228,7 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    随着物联网（IoT）、智能制造、机器人以及工业自动化技术的迅猛发展，嵌入式设备的应用场景日益复杂，设备数量呈爆发式增长。在产品的全生命周期中，为了修复系统漏洞、优化核心算法或迭代新功能，固件升级（Firmware Update）已成为嵌入式设备不可或缺的关键能力。@ZDHT202406062 @DZKK202207009 传统的固件更新通常依赖于物理烧录器（如J-Link、ST-Link），这要求技术人员必须到现场拆卸设备外壳进行操作，维护成本极高且效率低下。@DPJY202207003 因此，基于通信接口（如UART、以太网、无线网络等）的在应用编程（IAP, In-Application Programming）和在线升级（OTA, Over-the-Air）技术逐渐成为行业标准。@CDJI202510014 @ZHANG2026104735
+    随着物联网（IoT）、智能制造、机器人以及工业自动化技术的迅猛发展，嵌入式设备的应用场景日益复杂，设备数量呈爆发式增长。在产品的全生命周期中，为了修复系统漏洞、优化核心算法或迭代新功能，固件升级（Firmware Update）已成为嵌入式设备不可或缺的关键能力。@ZDHT202406062 @DZKK202207009 传统的固件更新通常依赖于物理烧录器（如J-Link、ST-Link），这要求技术人员必须到现场拆卸设备外壳进行操作，维护成本极高且效率低下。@DPJY202207003 因此，基于通信接口（如UART、以太网、无线网络等）的在应用编程（IAP, In-Application Programming）和在线升级（OTA, Over-the-Air）技术逐渐成为行业标准。@CDJI202510014 @Kebir2024
   ]
   #par(
     first-line-indent: 12pt * 2,
@@ -2151,7 +2157,7 @@
     #set enum(
       indent: 12pt * 2,
     )
-    + 输入流（Read Stream）：算法引擎同时开启两个读取通道。通道 A 指向 OEM 区（或当前 USER 区）的旧固件作为基准数据（Base data）；通道 B 指向存放于 PATCH 区的补丁数据。具体实现：@ZHANG2026104735
+    + 输入流（Read Stream）：算法引擎同时开启两个读取通道。通道 A 指向 OEM 区（或当前 USER 区）的旧固件作为基准数据（Base data）；通道 B 指向存放于 PATCH 区的补丁数据。具体实现：@Kebir2024
 
       ```c
       /* ====================================================================
@@ -2197,7 +2203,7 @@
       ```
 
     + 内存运算（In-RAM Computing）：detools 引擎在 RAM 中仅开辟几百字节的滑动窗口缓存。@1024913608.nh 它以块为单位读取 Base 数据和 Patch 数据，根据 Patch 中的指令（如：复制某段数据、插入新数据、修改某些字节）进行快速的异或与拼接运算。
-    + 输出流（Write Stream）：一旦缓存区拼装出完整的 Flash 扇区大小（如 1KB 或 4KB），系统立即调用底层 Flash 擦写接口（如 erase_user() ），将其流式写入目标分区（如 USER 区）。具体实现：@ZHANG2026104735
+    + 输出流（Write Stream）：一旦缓存区拼装出完整的 Flash 扇区大小（如 1KB 或 4KB），系统立即调用底层 Flash 擦写接口（如 erase_user() ），将其流式写入目标分区（如 USER 区）。具体实现：@Kebir2024
 
       ```c
       /* ====================================================================
@@ -2483,7 +2489,17 @@
   #par(
     first-line-indent: 12pt * 2,
   )[
-    为了验证Bootloader的实际运行效果，保证测试数据的准确性与可重复性，本文搭建了完整的软硬件测试平台。具体软硬件环境配置如下表所示。
+    为了验证Bootloader的实际运行效果，保证测试数据的准确性与可重复性，本文搭建了完整的软硬件测试平台。实验环境如 @image:environment 所示：
+  ]
+  #figure(
+    image("assets/environment.png", width: 90%),
+    caption: [实验环境],
+  ) <image:environment>
+  #par[]
+  #par(
+    first-line-indent: 12pt * 2,
+  )[
+    为了验证Bootloader的实际运行效果，保证测试数据的准确性与可重复性，本文搭建了完整的软硬件测试平台。具体软硬件环境配置如 @table:environment 所示。
   ]
   #align(center)[
     #figure(
@@ -2517,7 +2533,7 @@
         [串口终端], [v25.4],
         [文件传输], [v5.6.0],
       ),
-    )
+    ) <table:environment>
   ]
   #par[]
 
@@ -2779,7 +2795,11 @@
 #page[
   #align(center)[
     #par[
-      #text(font: "Microsoft YaHei", size: 16pt, weight: "bold")[Architecture Design of Reliable Firmware Update for Embedded Systems in Industrial Robots]
+      #text(
+        font: "Microsoft YaHei",
+        size: 16pt,
+        weight: "bold",
+      )[Architecture Design of Reliable Firmware Update for Embedded Systems in Industrial Robots]
     ]
   ]
   #heading(level: 1, numbering: none)[Abstract]
