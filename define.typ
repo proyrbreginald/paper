@@ -86,11 +86,11 @@
   #align(right + bottom)[
     #text(font: "SimSun", size: 14pt)[
       #par[
-        毕业论文（设计）作者签名：#box(image("assets/signature.png", width: 15%), baseline: 16pt)
+        毕业论文（设计）作者签名：#str("               ")
       ]
       #par[]
       #par[]
-      #par[#today.display("[year]年[month]月[day]日")]
+      #par[#today.display("2026年04月15日")]
       #par[]
       #par[]
     ]
