@@ -19,16 +19,16 @@
       #align(center)[深圳大学本科毕业论文——#title]
     ]
   ],
-  background: {
-    let watermark = align(center + horizon, rotate(-30deg, text(fill: rgb("#E0E0E0"), size: 32pt, "杨荣宝")))
-    let repeats = (watermark,) * 15
-    grid(
-      columns: 3,
-      rows: 5,
-      gutter: 5cm,
-      ..repeats
-    )
-  },
+  // background: {
+  //   let watermark = align(center + horizon, rotate(-30deg, text(fill: rgb("#E0E0E0"), size: 32pt, "杨荣宝")))
+  //   let repeats = (watermark,) * 15
+  //   grid(
+  //     columns: 3,
+  //     rows: 5,
+  //     gutter: 5cm,
+  //     ..repeats
+  //   )
+  // },
 )
 
 /**
